@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PennyWise Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg-color: white;
+            --text-color: #1c1c1e;
+            --text-muted-color: #6b7280;
+            --border-color: #e5e7eb;
+            --input-bg-color: #ffffff;
+            --input-text-color: #1c1c1e;
+            --button-primary-bg: #007aff;
+            --button-primary-text: white;
+            --button-secondary-bg: #e5e7eb;
+            --button-secondary-text: #1f2937;
+            --button-secondary-hover-bg: #d1d5db;
+            --ios-blue: #007aff;
+            --link-color: #007aff;
+            --error-text-color: #ef4444;
+            --success-text-color: #22c55e;
+            --sidebar-bg: #2c3e50; /* Admin sidebar color */
+            --sidebar-link-color: #ecf0f1;
+            --sidebar-link-hover-bg: #34495e;
+            --sidebar-active-link-bg: var(--ios-blue);
+        }
+
+        html.dark {
+            --bg-color: #1c1c1e;
+            --card-bg-color: #2c2c2e;
+            --text-color: #ffffff;
+            --text-muted-color: #8e8e93;
+            --border-color: #3a3a3c;
+            --input-bg-color: #3a3a3c;
+            --input-text-color: #ffffff;
+            --button-secondary-bg: #3a3a3c;
+            --button-secondary-text: #ffffff;
+            --button-secondary-hover-bg: #4a4a4c;
+            --link-color: #0095ff;
+            --sidebar-bg: #1e2b37;
+            --sidebar-link-color: #bdc3c7;
+            --sidebar-link-hover-bg: #2c3e50;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin: 0; 
+        }
+        .ios-card {
+            background-color: var(--card-bg-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            transition: background-color 0.3s ease;
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+        .input-group { position: relative; }
+        .ios-input, .ios-textarea {
+            background-color: var(--input-bg-color); color: var(--input-text-color);
+            border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.75rem 1rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease, color 0.3s ease;
+            width: 100%;
+        }
+         .ios-input.pr-10 { padding-right: 2.5rem; } /* For password toggle */
+        .ios-input:focus, .ios-textarea:focus {
+            border-color: var(--ios-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); outline: none;
+        }
+         .password-toggle-admin { /* Specific for admin login */
+            position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%);
+            cursor: pointer; color: var(--icon-color); padding: 0.25rem;
+        }
+        .password-toggle-admin svg { width: 1.25rem; height: 1.25rem; }
+
+        .ios-button {
+            background-color: var(--button-primary-bg); color: var(--button-primary-text);
+            font-weight: 500; padding: 0.75rem 1.5rem; border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out; text-align: center;
+            cursor: pointer;
+        }
+        .ios-button:hover { background-color: #005bb5; }
+        .ios-button-secondary {
+            background-color: var(--button-secondary-bg); color: var(--button-secondary-text);
+            font-weight: 500; padding: 0.75rem 1.5rem; border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+         .ios-button-secondary:hover { background-color: var(--button-secondary-hover-bg); }
+
+        .admin-sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-link-color);
+            padding: 1.5rem 0;
+            transition: background-color 0.3s ease, color 0.3s ease, width 0.3s ease;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+        }
+        .admin-sidebar .logo {
+            padding: 0 1.5rem 1.5rem 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            border-bottom: 1px solid var(--sidebar-link-hover-bg);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .admin-sidebar nav {
+            flex-grow: 1;
+        }
+        .admin-sidebar nav a {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--sidebar-link-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .admin-sidebar nav a:hover {
+            background-color: var(--sidebar-link-hover-bg);
+            color: white;
+        }
+        .admin-sidebar nav a.active {
+            background-color: var(--sidebar-active-link-bg);
+            color: white;
+        }
+        .admin-main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            width: calc(100% - 260px);
+            flex-grow: 1;
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+        
+        .admin-table-container {
+            overflow-x: auto;
+        }
+        .admin-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .admin-table th, .admin-table td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .admin-table th { background-color: var(--button-secondary-bg); font-weight: 600; }
+        html.dark .admin-table th { background-color: var(--button-secondary-hover-bg); }
+
+        .admin-login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .hidden-form { display: none !important; } 
+        .hidden { display: none !important; }
+        
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+            .admin-sidebar.open {
+                width: 220px;
+                padding: 1.5rem 0;
+            }
+            .admin-main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            .admin-main-content.sidebar-open {
+                 margin-left: 220px;
+                 width: calc(100% - 220px);
+            }
+            .admin-sidebar .logo { font-size: 1.25rem; }
+            .admin-sidebar nav a { padding: 0.75rem 1rem; }
+        }
+
+        #hamburger-menu {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 60;
+            background-color: var(--button-primary-bg);
+            color: var(--button-primary-text);
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+        #hamburger-menu svg { width: 1.5rem; height: 1.5rem; }
+        #admin-login-theme-toggle svg { color: var(--icon-color); }
+        #admin-login-theme-toggle:hover svg { color: var(--text-color); }
+
+
+    </style>
+</head>
+<body>
+    <button id="hamburger-menu">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+    </button>
+
+    <div id="admin-login-page" class="admin-login-container">
+        <div class="ios-card w-full max-w-md">
+            <div class="flex justify-end mb-4">
+                 <button id="admin-login-theme-toggle" title="Toggle theme" class="p-2 rounded-full hover:bg-gray-500/10">
+                    <svg id="admin-login-theme-icon-light" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12h2.25m.386-6.364l1.591 1.591" /></svg>
+                    <svg id="admin-login-theme-icon-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>
+                </button>
+            </div>
+            <img src="C:\Users\IKRAM-K\Desktop\PennyWise\Logo.jpg" alt="Admin Logo" class="mx-auto mb-6 h-20 w-20 rounded-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/80x80/cccccc/333333?text=Admin';">
+            
+            <!-- Login Form -->
+            <div id="login-form-container">
+                <h1 class="text-2xl font-bold text-center mb-6 text-primary">PennyWise Admin Login</h1>
+                <form id="admin-login-form" class="space-y-4">
+                    <div>
+                        <label for="admin-username" class="block text-sm font-medium text-muted">Username</label>
+                        <input type="text" id="admin-username" required class="ios-input w-full mt-1">
+                    </div>
+                    <div class="input-group"> <!-- Added input-group for password toggle -->
+                        <label for="admin-password" class="block text-sm font-medium text-muted">Password</label>
+                        <input type="password" id="admin-password" required class="ios-input w-full mt-1 pr-10">
+                        <span class="password-toggle-admin" data-target="admin-password">
+                            <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <svg class="eye-slash-icon hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.575M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-18-18" /></svg>
+                        </span>
+                    </div>
+                    <button type="submit" class="ios-button w-full">Login</button>
+                    <p id="admin-login-error" class="text-error text-sm text-center h-4"></p>
+                </form>
+                <p class="text-center text-sm text-muted mt-4">No admin account? 
+                    <button type="button" id="show-create-admin-account-form-button" class="font-medium text-link hover:underline">Create Admin Account</button>
+                </p>
+            </div>
+
+            <!-- Create Admin Account Form (on login page) -->
+            <div id="create-admin-account-form-container" class="hidden-form">
+                <h1 class="text-2xl font-bold text-center mb-6 text-primary">Create Admin Account</h1>
+                <form id="public-create-admin-form" class="space-y-4">
+                    <div>
+                        <label for="public-new-admin-username" class="block text-sm font-medium text-muted">Admin Username</label>
+                        <input type="text" id="public-new-admin-username" required class="ios-input w-full mt-1">
+                    </div>
+                    <div class="input-group">
+                        <label for="public-new-admin-password" class="block text-sm font-medium text-muted">Password</label>
+                        <input type="password" id="public-new-admin-password" required class="ios-input w-full mt-1 pr-10">
+                        <span class="password-toggle-admin" data-target="public-new-admin-password">
+                             <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <svg class="eye-slash-icon hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.575M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-18-18" /></svg>
+                        </span>
+                    </div>
+                    <div class="input-group">
+                        <label for="public-confirm-admin-password" class="block text-sm font-medium text-muted">Confirm Password</label>
+                        <input type="password" id="public-confirm-admin-password" required class="ios-input w-full mt-1 pr-10">
+                         <span class="password-toggle-admin" data-target="public-confirm-admin-password">
+                             <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <svg class="eye-slash-icon hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.575M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-18-18" /></svg>
+                        </span>
+                    </div>
+                    <button type="submit" class="ios-button w-full">Create Account</button>
+                    <p id="public-create-admin-error" class="text-error text-sm text-center h-4"></p>
+                    <p id="public-create-admin-success" class="text-success text-sm text-center h-4"></p>
+                </form>
+                <p class="text-center text-sm text-muted mt-4">Already have an account? 
+                    <button type="button" id="show-admin-login-form-button" class="font-medium text-link hover:underline">Login</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="hidden w-full">
+        <aside id="admin-sidebar" class="admin-sidebar">
+            <div class="logo">PennyWise Admin</div>
+            <nav>
+                <a href="#" class="admin-nav-link active" data-section="dashboard-section">Dashboard</a>
+                <a href="#" class="admin-nav-link" data-section="users-section">User Management (App Users)</a>
+                <a href="#" class="admin-nav-link" data-section="admin-management-section">Admin Management (Panel Users)</a>
+                <a href="#" class="admin-nav-link" data-section="categories-section">Category Management</a>
+                <a href="#" class="admin-nav-link" data-section="settings-section">Application Settings</a>
+            </nav>
+             <div class="p-4 mt-auto border-t border-gray-700">
+                <button id="admin-theme-toggle" class="ios-button-secondary w-full mb-2 text-sm">Toggle Theme</button>
+                <button id="admin-logout-button" class="ios-button w-full !bg-red-500 hover:!bg-red-600 text-sm">Logout</button>
+            </div>
+        </aside>
+
+        <main id="admin-main-content" class="admin-main-content">
+            <section id="dashboard-section" class="admin-section active">
+                <h2 class="text-2xl font-semibold mb-6 text-primary">Dashboard</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="ios-card !p-6">
+                        <h3 class="text-lg font-medium text-muted">Total App Users</h3>
+                        <p id="stats-total-users" class="text-3xl font-semibold text-primary">--</p>
+                        <p class="text-sm text-muted" id="stats-total-users-source"> (Loading...)</p>
+                    </div>
+                    <div class="ios-card !p-6">
+                        <h3 class="text-lg font-medium text-muted">Total Expenses Logged</h3>
+                        <p id="stats-total-expenses" class="text-3xl font-semibold text-primary">--</p>
+                         <p class="text-sm text-muted"> (Backend needed for accuracy)</p>
+                    </div>
+                     <div class="ios-card !p-6">
+                        <h3 class="text-lg font-medium text-muted">Active Theme</h3>
+                        <p id="stats-active-theme" class="text-3xl font-semibold text-primary">Light</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="users-section" class="admin-section">
+                <h2 class="text-2xl font-semibold mb-6 text-primary">App User Management</h2>
+                <div class="ios-card">
+                    <p class="text-muted mb-4">Displaying users registered through the main PennyWise application (Index.html).</p>
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Full Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="app-users-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                     <p id="no-app-users-message" class="text-center text-muted mt-4 hidden">No app users found in localStorage.</p>
+                </div>
+            </section>
+            
+            <section id="admin-management-section" class="admin-section">
+                <h2 class="text-2xl font-semibold mb-6 text-primary">Admin Panel User Management</h2>
+                <div class="ios-card">
+                    <h3 class="text-xl font-medium mb-4 text-primary">Create New Panel Admin User</h3>
+                    <form id="create-admin-form" class="space-y-4">
+                        <div>
+                            <label for="new-admin-username" class="block text-sm font-medium text-muted">New Admin Username</label>
+                            <input type="text" id="new-admin-username" required class="ios-input w-full mt-1">
+                        </div>
+                        <div class="input-group">
+                            <label for="new-admin-password" class="block text-sm font-medium text-muted">New Admin Password</label>
+                            <input type="password" id="new-admin-password" required class="ios-input w-full mt-1 pr-10">
+                            <span class="password-toggle-admin" data-target="new-admin-password">
+                                <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                <svg class="eye-slash-icon hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.575M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-18-18" /></svg>
+                            </span>
+                        </div>
+                        <button type="submit" class="ios-button">Create Panel Admin</button>
+                    </form>
+                </div>
+
+                <div class="ios-card mt-6">
+                    <h3 class="text-xl font-medium mb-4 text-primary">Existing Panel Admin Users</h3>
+                    <p class="text-sm text-muted mb-2">(For demo purposes, passwords are not displayed. Deleting the primary 'admin' user is not allowed in this demo.)</p>
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Admin Username</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="categories-section" class="admin-section">
+                <h2 class="text-2xl font-semibold mb-6 text-primary">Expense Category Management</h2>
+                <div class="ios-card">
+                    <h3 class="text-xl font-medium mb-4 text-primary">Add/Edit Category</h3>
+                    <form id="category-form" class="space-y-4">
+                        <input type="hidden" id="category-id">
+                        <div>
+                            <label for="category-key" class="block text-sm font-medium text-muted">Category Key (e.g., 'food', 'utilities', no spaces, lowercase)</label>
+                            <input type="text" id="category-key" required class="ios-input w-full mt-1">
+                        </div>
+                        <div>
+                            <label for="category-name-en" class="block text-sm font-medium text-muted">Name (English)</label>
+                            <input type="text" id="category-name-en" required class="ios-input w-full mt-1">
+                        </div>
+                        <div>
+                            <label for="category-name-ur" class="block text-sm font-medium text-muted">Name (Urdu)</label>
+                            <input type="text" id="category-name-ur" dir="rtl" required class="ios-input w-full mt-1">
+                        </div>
+                        <div class="flex space-x-2">
+                            <button type="submit" id="save-category-button" class="ios-button">Save Category</button>
+                            <button type="button" id="clear-category-form-button" class="ios-button-secondary">Clear Form</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="ios-card mt-6">
+                    <h3 class="text-xl font-medium mb-4 text-primary">Existing Categories</h3>
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Key</th>
+                                    <th>Name (EN)</th>
+                                    <th>Name (UR)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categories-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settings-section" class="admin-section">
+                <h2 class="text-2xl font-semibold mb-6 text-primary">Application Settings</h2>
+                 <div class="ios-card">
+                    <h3 class="text-xl font-medium mb-3 text-primary">Disclaimer Text</h3>
+                    <form id="disclaimer-form" class="space-y-3">
+                        <div>
+                            <label for="disclaimer-en" class="block text-sm font-medium text-muted">Disclaimer (English)</label>
+                            <textarea id="disclaimer-en" rows="4" class="ios-textarea w-full mt-1"></textarea>
+                        </div>
+                        <div>
+                            <label for="disclaimer-ur" class="block text-sm font-medium text-muted">Disclaimer (Urdu)</label>
+                            <textarea id="disclaimer-ur" rows="4" dir="rtl" class="ios-textarea w-full mt-1"></textarea>
+                        </div>
+                        <button type="submit" class="ios-button">Save Disclaimer</button>
+                    </form>
+                </div>
+
+                <div class="ios-card mt-6">
+                    <h3 class="text-xl font-medium mb-3 text-primary">Feature Flags (Conceptual)</h3>
+                    <p class="text-muted mb-4">This section would allow enabling/disabling pre-built features. Adding entirely new features requires code deployment.</p>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded-md shadow-sm">
+                            <label for="feature-ai-tips" class="font-medium text-primary">Enable AI Savings Tips</label>
+                            <input type="checkbox" id="feature-ai-tips" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500">
+                        </div>
+                         <div class="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded-md shadow-sm">
+                            <label for="feature-monthly-reports" class="font-medium text-primary">Enable Monthly Reports</label>
+                            <input type="checkbox" id="feature-monthly-reports" class="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500" checked>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM ELEMENT SELECTION ---
+        const adminLoginPage = document.getElementById('admin-login-page');
+        const adminPanel = document.getElementById('admin-panel');
+        
+        const loginFormContainer = document.getElementById('login-form-container');
+        const adminLoginForm = document.getElementById('admin-login-form');
+        const adminLoginError = document.getElementById('admin-login-error');
+        const createAdminAccountFormContainer = document.getElementById('create-admin-account-form-container');
+        const publicCreateAdminForm = document.getElementById('public-create-admin-form');
+        const publicCreateAdminError = document.getElementById('public-create-admin-error');
+        const publicCreateAdminSuccess = document.getElementById('public-create-admin-success');
+        const showCreateAdminAccountFormButton = document.getElementById('show-create-admin-account-form-button');
+        const showAdminLoginFormButton = document.getElementById('show-admin-login-form-button');
+        const adminLoginThemeToggle = document.getElementById('admin-login-theme-toggle');
+        const adminLoginThemeIconLight = document.getElementById('admin-login-theme-icon-light');
+        const adminLoginThemeIconDark = document.getElementById('admin-login-theme-icon-dark');
+        
+        const adminSidebar = document.getElementById('admin-sidebar');
+        const adminMainContent = document.getElementById('admin-main-content');
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const adminNavLinks = document.querySelectorAll('.admin-nav-link');
+        const adminSections = document.querySelectorAll('.admin-section');
+        const adminThemeToggleInternal = document.getElementById('admin-theme-toggle'); 
+        const adminLogoutButton = document.getElementById('admin-logout-button');
+
+        const categoryForm = document.getElementById('category-form');
+        const categoriesTableBody = document.getElementById('categories-table-body');
+        const categoryIdInput = document.getElementById('category-id');
+        const categoryKeyInput = document.getElementById('category-key');
+        const categoryNameEnInput = document.getElementById('category-name-en');
+        const categoryNameUrInput = document.getElementById('category-name-ur');
+        const clearCategoryFormButton = document.getElementById('clear-category-form-button');
+        
+        const disclaimerForm = document.getElementById('disclaimer-form');
+        const disclaimerEnTextarea = document.getElementById('disclaimer-en');
+        const disclaimerUrTextarea = document.getElementById('disclaimer-ur');
+
+        const statsTotalUsers = document.getElementById('stats-total-users');
+        const statsTotalUsersSource = document.getElementById('stats-total-users-source');
+        const statsTotalExpenses = document.getElementById('stats-total-expenses');
+        const statsActiveTheme = document.getElementById('stats-active-theme');
+        const appUsersTableBody = document.getElementById('app-users-table-body');
+        const noAppUsersMessage = document.getElementById('no-app-users-message');
+
+
+        const createAdminFormInternal = document.getElementById('create-admin-form'); 
+        const newAdminUsernameInputInternal = document.getElementById('new-admin-username'); 
+        const newAdminPasswordInputInternal = document.getElementById('new-admin-password'); 
+        const adminUsersTableBody = document.getElementById('admin-users-table-body');
+
+        // --- STATE AND DATA ---
+        let currentAdminTheme = localStorage.getItem('pennyWiseAdminTheme') || 'light';
+        let loggedInAdmin = sessionStorage.getItem('pennyWiseAdminLoggedIn') === 'true';
+        const PRIMARY_ADMIN_USERNAME = 'admin';
+        let adminUsers = JSON.parse(localStorage.getItem('pennyWiseAdminUsers')) || []; 
+
+        let expenseCategories = JSON.parse(localStorage.getItem('pennyWiseAdminCategories')) || {
+            food: { en: "Food", ur: "کھانا" }, dining: { en: "Dining Out", ur: "باہر کھانا" },
+            fuel: { en: "Fuel", ur: "ایندھن" }, transport: { en: "Transport", ur: "آمد و رفت" },
+            utilities: { en: "Utilities", ur: "بل" },
+        };
+        
+        let disclaimerTexts = JSON.parse(localStorage.getItem('pennyWiseAdminDisclaimers')) || {
+            en: "This expense tracker app is for personal finance management and educational purposes only...",
+            ur: "یہ ایپ صرف ذاتی مالی انتظام کے لیے ہے اور تعلیمی مقاصد کے لیے فراہم کی گئی ہے۔۔۔"
+        };
+
+        // --- HELPER FUNCTIONS ---
+        function applyAdminTheme(theme) {
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            currentAdminTheme = theme;
+            localStorage.setItem('pennyWiseAdminTheme', theme);
+            if(statsActiveTheme) statsActiveTheme.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+            if(adminLoginThemeIconLight) adminLoginThemeIconLight.classList.toggle('hidden', theme === 'dark');
+            if(adminLoginThemeIconDark) adminLoginThemeIconDark.classList.toggle('hidden', theme !== 'dark');
+        }
+
+        function showAdminSection(sectionId) {
+            adminSections.forEach(section => section.classList.remove('active'));
+            const activeSection = document.getElementById(sectionId);
+            if(activeSection) activeSection.classList.add('active');
+            
+            adminNavLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.section === sectionId) link.classList.add('active');
+            });
+            if (window.innerWidth <= 768) {
+                adminSidebar.classList.remove('open');
+                adminMainContent.classList.remove('sidebar-open');
+            }
+        }
+        
+        function saveAdminUsers() {
+            localStorage.setItem('pennyWiseAdminUsers', JSON.stringify(adminUsers));
+        }
+
+        function togglePasswordVisibilityAdmin(event) {
+            const toggleButton = event.currentTarget; 
+            const targetInputId = toggleButton.dataset.target;
+            const targetInput = document.getElementById(targetInputId);
+            const eyeIcon = toggleButton.querySelector('.eye-icon'); 
+            const eyeSlashIcon = toggleButton.querySelector('.eye-slash-icon');
+            
+            if (targetInput && eyeIcon && eyeSlashIcon) {
+                if (targetInput.type === 'password') {
+                    targetInput.type = 'text'; 
+                    eyeIcon.classList.add('hidden'); 
+                    eyeSlashIcon.classList.remove('hidden');
+                } else {
+                    targetInput.type = 'password'; 
+                    eyeIcon.classList.remove('hidden'); 
+                    eyeSlashIcon.classList.add('hidden');
+                }
+            }
+        }
+
+
+        // --- AUTHENTICATION & LOGIN PAGE FORM TOGGLING ---
+        function switchToCreateAdminAccountForm() {
+            loginFormContainer.classList.add('hidden-form');
+            createAdminAccountFormContainer.classList.remove('hidden-form');
+            adminLoginError.textContent = ''; 
+            publicCreateAdminError.textContent = ''; 
+            publicCreateAdminSuccess.textContent = ''; 
+        }
+
+        function switchToAdminLoginForm() {
+            createAdminAccountFormContainer.classList.add('hidden-form');
+            loginFormContainer.classList.remove('hidden-form');
+            adminLoginError.textContent = '';
+            publicCreateAdminError.textContent = '';
+            publicCreateAdminSuccess.textContent = '';
+        }
+        
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            const username = adminLoginForm['admin-username'].value.trim();
+            const password = adminLoginForm['admin-password'].value;
+            let foundAdmin = false;
+
+            if (username === PRIMARY_ADMIN_USERNAME && password === 'password123') {
+                foundAdmin = true;
+            } else {
+                const userInStorage = adminUsers.find(user => user.username === username && user.password === password);
+                if (userInStorage) foundAdmin = true;
+            }
+
+            if (foundAdmin) {
+                loggedInAdmin = true;
+                sessionStorage.setItem('pennyWiseAdminLoggedIn', 'true');
+                adminLoginPage.style.display = 'none';
+                adminPanel.classList.remove('hidden'); adminPanel.style.display = 'flex'; 
+                hamburgerMenu.style.display = 'block';
+                initializeAdminPanel();
+            } else {
+                adminLoginError.textContent = 'Invalid credentials.';
+            }
+        }
+        
+        function handleAdminLogout() {
+            loggedInAdmin = false;
+            sessionStorage.removeItem('pennyWiseAdminLoggedIn');
+            adminPanel.classList.add('hidden'); adminPanel.style.display = 'none';
+            adminLoginPage.style.display = 'flex';
+            hamburgerMenu.style.display = 'none';
+            adminLoginForm.reset(); adminLoginError.textContent = '';
+            document.getElementById('admin-password').type = 'password';
+            const adminPasswordToggle = document.querySelector('.password-toggle-admin[data-target="admin-password"]');
+            if(adminPasswordToggle) {
+                adminPasswordToggle.querySelector('.eye-icon').classList.remove('hidden');
+                adminPasswordToggle.querySelector('.eye-slash-icon').classList.add('hidden');
+            }
+            switchToAdminLoginForm(); 
+        }
+
+        function handlePublicCreateAdminSubmit(event) {
+            event.preventDefault();
+            publicCreateAdminError.textContent = '';
+            publicCreateAdminSuccess.textContent = '';
+            const username = document.getElementById('public-new-admin-username').value.trim();
+            const password = document.getElementById('public-new-admin-password').value;
+            const confirmPassword = document.getElementById('public-confirm-admin-password').value;
+
+            if (!username || !password || !confirmPassword) {
+                publicCreateAdminError.textContent = 'Please fill all fields.'; return;
+            }
+            if (password.length < 6) { 
+                publicCreateAdminError.textContent = 'Password must be at least 6 characters long.'; return;
+            }
+            if (password !== confirmPassword) {
+                publicCreateAdminError.textContent = 'Passwords do not match.'; return;
+            }
+            if (username === PRIMARY_ADMIN_USERNAME || adminUsers.find(user => user.username === username)) {
+                publicCreateAdminError.textContent = 'Username already exists.'; return;
+            }
+
+            adminUsers.push({ username, password });
+            saveAdminUsers();
+            publicCreateAdminSuccess.textContent = `Admin "${username}" created! You can now login.`;
+            publicCreateAdminForm.reset();
+            document.getElementById('public-new-admin-password').type = 'password';
+            document.getElementById('public-confirm-admin-password').type = 'password';
+            document.querySelectorAll('#create-admin-account-form-container .password-toggle-admin').forEach(toggle => {
+                toggle.querySelector('.eye-icon').classList.remove('hidden');
+                toggle.querySelector('.eye-slash-icon').classList.add('hidden');
+            });
+            setTimeout(switchToAdminLoginForm, 2000); 
+        }
+
+        // --- APP USER MANAGEMENT (Reading from index.html's localStorage) ---
+        function renderAppUsersTable() {
+            const appUsersData = JSON.parse(localStorage.getItem('pennyWiseUsers')) || [];
+            appUsersTableBody.innerHTML = ''; 
+
+            if (appUsersData.length === 0) {
+                noAppUsersMessage.classList.remove('hidden');
+                return;
+            }
+            noAppUsersMessage.classList.add('hidden');
+
+            appUsersData.forEach(user => {
+                const row = appUsersTableBody.insertRow();
+                const username = user.username || 'N/A';
+                const email = user.email || 'N/A';
+                const fullName = user.fullName || 'N/A';
+                
+                row.innerHTML = `
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700">${username}</td>
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700">${email}</td>
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700">${fullName}</td>
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700">
+                        <button data-username="${username}" class="delete-app-user-btn text-xs ios-button-secondary !px-2 !py-1 !bg-red-500 !text-white hover:!bg-red-600">Delete User</button>
+                    </td>
+                `;
+            });
+             document.querySelectorAll('.delete-app-user-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const userToDelete = e.target.dataset.username;
+                    if (confirm(`Are you sure you want to delete app user "${userToDelete}"? This will remove their data from localStorage.`)) {
+                        let currentAppUsers = JSON.parse(localStorage.getItem('pennyWiseUsers')) || [];
+                        currentAppUsers = currentAppUsers.filter(u => u.username !== userToDelete);
+                        localStorage.setItem('pennyWiseUsers', JSON.stringify(currentAppUsers));
+                        
+                        localStorage.removeItem(`pennyWiseSettings_${userToDelete}`);
+                        localStorage.removeItem(`pennyWiseExpenses_${userToDelete}`);
+                        
+                        renderAppUsersTable(); 
+                        loadDashboardStats(); 
+                        alert(`App user "${userToDelete}" and their associated data (settings, expenses) removed from localStorage.`);
+                    }
+                });
+            });
+        }
+
+
+        // --- ADMIN PANEL USER MANAGEMENT (Internal) ---
+        function renderAdminUsersTable() {
+            adminUsersTableBody.innerHTML = '';
+            const primaryAdminRow = adminUsersTableBody.insertRow();
+            primaryAdminRow.innerHTML = `
+                <td class="p-3 border-b border-gray-200 dark:border-gray-700">${PRIMARY_ADMIN_USERNAME} (Primary)</td>
+                <td class="p-3 border-b border-gray-200 dark:border-gray-700">N/A (Cannot be deleted)</td>`;
+
+            adminUsers.forEach(user => {
+                const row = adminUsersTableBody.insertRow();
+                row.innerHTML = `
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700">${user.username}</td>
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700">
+                        <button data-username="${user.username}" class="delete-admin-btn text-xs ios-button-secondary !px-2 !py-1 !bg-red-500 !text-white hover:!bg-red-600">Delete</button>
+                    </td>`;
+            });
+            document.querySelectorAll('.delete-admin-btn').forEach(btn => btn.addEventListener('click', handleDeleteAdminUserInternal));
+        }
+
+        function handleCreateAdminFormInternalSubmit(event) {
+            event.preventDefault();
+            const newUsername = newAdminUsernameInputInternal.value.trim();
+            const newPassword = newAdminPasswordInputInternal.value;
+
+            if (!newUsername || !newPassword) {
+                alert('Please enter both username and password for the new panel admin.'); return;
+            }
+             if (newPassword.length < 6) {
+                alert('Password must be at least 6 characters long.'); return;
+            }
+            if (newUsername === PRIMARY_ADMIN_USERNAME || adminUsers.find(user => user.username === newUsername)) {
+                alert('This admin username already exists.'); return;
+            }
+
+            adminUsers.push({ username: newUsername, password: newPassword });
+            saveAdminUsers();
+            alert(`Panel admin user "${newUsername}" created successfully!`);
+            createAdminFormInternal.reset();
+            newAdminPasswordInputInternal.type = 'password';
+            const toggle = document.querySelector('.password-toggle-admin[data-target="new-admin-password"]');
+            if(toggle){
+                toggle.querySelector('.eye-icon').classList.remove('hidden');
+                toggle.querySelector('.eye-slash-icon').classList.add('hidden');
+            }
+            renderAdminUsersTable();
+        }
+
+        function handleDeleteAdminUserInternal(event) {
+            const usernameToDelete = event.target.dataset.username;
+            if (usernameToDelete === PRIMARY_ADMIN_USERNAME) {
+                alert('The primary admin user cannot be deleted.'); return;
+            }
+            if (confirm(`Are you sure you want to delete panel admin "${usernameToDelete}"?`)) {
+                adminUsers = adminUsers.filter(user => user.username !== usernameToDelete);
+                saveAdminUsers();
+                alert(`Panel admin user "${usernameToDelete}" deleted.`);
+                renderAdminUsersTable();
+            }
+        }
+
+        // --- CATEGORY MANAGEMENT ---
+        function renderCategories() {
+            categoriesTableBody.innerHTML = '';
+            if (Object.keys(expenseCategories).length === 0) {
+                const row = categoriesTableBody.insertRow();
+                const cell = row.insertCell(); cell.colSpan = 4;
+                cell.textContent = 'No categories defined yet.'; cell.className = 'text-center text-muted p-4';
+                return;
+            }
+            for (const key in expenseCategories) {
+                const category = expenseCategories[key];
+                const row = categoriesTableBody.insertRow();
+                row.innerHTML = `
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700">${key}</td>
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700">${category.en}</td>
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700" dir="rtl">${category.ur}</td>
+                    <td class="p-3 border-b border-gray-200 dark:border-gray-700">
+                        <button data-key="${key}" class="edit-category-btn text-xs ios-button-secondary !px-2 !py-1 mr-1">Edit</button>
+                        <button data-key="${key}" class="delete-category-btn text-xs ios-button-secondary !px-2 !py-1 !bg-red-500 !text-white hover:!bg-red-600">Delete</button>
+                    </td>`;
+            }
+            document.querySelectorAll('.edit-category-btn').forEach(btn => btn.addEventListener('click', handleEditCategory));
+            document.querySelectorAll('.delete-category-btn').forEach(btn => btn.addEventListener('click', handleDeleteCategory));
+        }
+
+        function handleCategoryFormSubmit(event) {
+            event.preventDefault();
+            const id = categoryIdInput.value; 
+            const key = categoryKeyInput.value.trim().toLowerCase().replace(/\s+/g, '-');
+            const nameEn = categoryNameEnInput.value.trim();
+            const nameUr = categoryNameUrInput.value.trim();
+
+            if (!key || !nameEn || !nameUr) { alert('Please fill all category fields.'); return; }
+            if (!id && expenseCategories[key]) { alert('Category key already exists. Please use a unique key.'); return; }
+            
+            expenseCategories[key] = { en: nameEn, ur: nameUr };
+            localStorage.setItem('pennyWiseAdminCategories', JSON.stringify(expenseCategories)); 
+            alert(`Category "${key}" ${id ? 'updated' : 'saved'} successfully! This will reflect in the user app.`);
+            renderCategories(); clearCategoryForm();
+        }
+        
+        function clearCategoryForm() {
+            categoryForm.reset(); categoryIdInput.value = ''; categoryKeyInput.readOnly = false;
+        }
+
+        function handleEditCategory(event) {
+            const key = event.target.dataset.key;
+            const category = expenseCategories[key];
+            if (category) {
+                categoryIdInput.value = key; categoryKeyInput.value = key;
+                categoryKeyInput.readOnly = true; 
+                categoryNameEnInput.value = category.en; categoryNameUrInput.value = category.ur;
+                categoryNameEnInput.focus();
+            }
+        }
+        function handleDeleteCategory(event) {
+            const key = event.target.dataset.key;
+            if (confirm(`Are you sure you want to delete category "${key}"? This will also affect the user app.`)) {
+                delete expenseCategories[key];
+                localStorage.setItem('pennyWiseAdminCategories', JSON.stringify(expenseCategories));
+                renderCategories(); alert(`Category "${key}" deleted successfully!`);
+            }
+        }
+        
+        // --- DISCLAIMER MANAGEMENT ---
+        function loadDisclaimerTexts() {
+            disclaimerEnTextarea.value = disclaimerTexts.en; disclaimerUrTextarea.value = disclaimerTexts.ur;
+        }
+
+        function handleDisclaimerFormSubmit(event) {
+            event.preventDefault();
+            disclaimerTexts.en = disclaimerEnTextarea.value; disclaimerTexts.ur = disclaimerUrTextarea.value;
+            localStorage.setItem('pennyWiseAdminDisclaimers', JSON.stringify(disclaimerTexts)); 
+            alert('Disclaimer texts updated successfully! This will reflect in the user app.');
+        }
+        
+        // --- DASHBOARD & RESPONSIVENESS ---
+        function loadDashboardStats() {
+            const appUsersData = JSON.parse(localStorage.getItem('pennyWiseUsers')) || []; 
+            if(statsTotalUsers) statsTotalUsers.textContent = appUsersData.length;
+            if(statsTotalUsersSource) statsTotalUsersSource.textContent = `(From localStorage 'pennyWiseUsers')`;
+            
+            if(statsTotalExpenses) statsTotalExpenses.textContent = 'N/A'; 
+        }
+        
+        function toggleSidebar() {
+            adminSidebar.classList.toggle('open'); adminMainContent.classList.toggle('sidebar-open');
+        }
+
+        function checkScreenSize() {
+            if (window.innerWidth > 768) {
+                hamburgerMenu.style.display = 'none';
+                adminSidebar.classList.remove('open'); adminMainContent.classList.remove('sidebar-open');
+                if (loggedInAdmin) {
+                    adminSidebar.style.width = '260px'; adminMainContent.style.marginLeft = '260px';
+                    adminMainContent.style.width = 'calc(100% - 260px)';
+                }
+            } else {
+                if (loggedInAdmin) { hamburgerMenu.style.display = 'block';}
+                adminSidebar.classList.remove('open'); adminMainContent.classList.remove('sidebar-open');
+                adminSidebar.style.width = ''; adminMainContent.style.marginLeft = '0';
+                adminMainContent.style.width = '100%';
+            }
+        }
+
+        // --- INITIALIZATION ---
+        function initializeAdminPanel() {
+            applyAdminTheme(currentAdminTheme); // Apply theme for panel
+            showAdminSection('dashboard-section');
+            renderCategories();
+            loadDisclaimerTexts();
+            renderAppUsersTable(); 
+            loadDashboardStats(); 
+            renderAdminUsersTable();
+            checkScreenSize();
+        }
+
+        // --- EVENT LISTENERS ---
+        if (adminLoginForm) adminLoginForm.addEventListener('submit', handleAdminLogin);
+        if (adminLogoutButton) adminLogoutButton.addEventListener('click', handleAdminLogout);
+        if (showCreateAdminAccountFormButton) showCreateAdminAccountFormButton.addEventListener('click', switchToCreateAdminAccountForm);
+        if (showAdminLoginFormButton) showAdminLoginFormButton.addEventListener('click', switchToAdminLoginForm);
+        if (publicCreateAdminForm) publicCreateAdminForm.addEventListener('submit', handlePublicCreateAdminSubmit);
+        
+        if(adminLoginThemeToggle) {
+            adminLoginThemeToggle.addEventListener('click', () => {
+                applyAdminTheme(currentAdminTheme === 'light' ? 'dark' : 'light');
+            });
+        }
+        document.querySelectorAll('.password-toggle-admin').forEach(toggle => {
+            toggle.addEventListener('click', togglePasswordVisibilityAdmin);
+        });
+
+
+        adminNavLinks.forEach(link => {
+            link.addEventListener('click', (e) => { e.preventDefault(); showAdminSection(link.dataset.section); });
+        });
+
+        if (adminThemeToggleInternal) adminThemeToggleInternal.addEventListener('click', () => applyAdminTheme(currentAdminTheme === 'light' ? 'dark' : 'light'));
+        
+        if(categoryForm) categoryForm.addEventListener('submit', handleCategoryFormSubmit);
+        if(clearCategoryFormButton) clearCategoryFormButton.addEventListener('click', clearCategoryForm);
+        if(disclaimerForm) disclaimerForm.addEventListener('submit', handleDisclaimerFormSubmit);
+        if(hamburgerMenu) hamburgerMenu.addEventListener('click', toggleSidebar);
+        if(createAdminFormInternal) createAdminFormInternal.addEventListener('submit', handleCreateAdminFormInternalSubmit);
+        
+        window.addEventListener('resize', checkScreenSize);
+
+        // --- INITIAL PAGE LOAD LOGIC ---
+        applyAdminTheme(currentAdminTheme); // Apply theme on initial load for login page too
+        if (loggedInAdmin) {
+            adminLoginPage.style.display = 'none';
+            adminPanel.classList.remove('hidden'); adminPanel.style.display = 'flex';
+            initializeAdminPanel();
+        } else {
+            adminLoginPage.style.display = 'flex';
+            adminPanel.classList.add('hidden'); adminPanel.style.display = 'none';
+            hamburgerMenu.style.display = 'none';
+            switchToAdminLoginForm(); 
+        }
+    });
+</script>
+</body>
+</html>

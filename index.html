@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en"> <!-- Default lang, will be updated by JS -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PennyWise - Expense Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg-color: white;
+            --text-color: #1c1c1e;
+            --text-muted-color: #6b7280;
+            --border-color: #e5e7eb;
+            --input-bg-color: #ffffff;
+            --input-text-color: #1c1c1e;
+            --button-primary-bg: #007aff;
+            --button-primary-text: white;
+            --button-secondary-bg: #e5e7eb;
+            --button-secondary-text: #1f2937;
+            --button-secondary-hover-bg: #d1d5db;
+            --ios-blue: #007aff;
+            --link-color: #007aff;
+            --error-text-color: #ef4444; /* Red-500 */
+            --success-text-color: #22c55e; /* Green-500 */
+            --warning-text-color: #f97316; /* Orange-500 */
+            --delete-button-text-color: #ef4444;
+            --delete-button-hover-bg: rgba(239, 68, 68, 0.1);
+            --icon-color: #6b7280;
+            --category-badge-bg: #e0e0e0;
+            --category-badge-text: #333333;
+            --progress-bar-bg: #e5e7eb; /* Tailwind gray-200 */
+            --progress-bar-fill: #007aff; /* iOS Blue */
+            --progress-bar-fill-overbudget: #ef4444; /* Red-500 for overbudget */
+            --footer-text-color: #8e8e93;
+        }
+
+        html.dark {
+            --bg-color: #1c1c1e;
+            --card-bg-color: #2c2c2e;
+            --text-color: #ffffff;
+            --text-muted-color: #8e8e93;
+            --border-color: #3a3a3c;
+            --input-bg-color: #3a3a3c;
+            --input-text-color: #ffffff;
+            --button-secondary-bg: #3a3a3c;
+            --button-secondary-text: #ffffff;
+            --button-secondary-hover-bg: #4a4a4c;
+            --link-color: #0095ff;
+            --error-text-color: #f87171; /* Red-400 */
+            --success-text-color: #4ade80; /* Green-400 */
+            --warning-text-color: #fb923c; /* Orange-400 */
+            --delete-button-text-color: #f87171;
+            --delete-button-hover-bg: rgba(248, 113, 113, 0.2);
+            --icon-color: #8e8e93;
+            --category-badge-bg: #4a4a4c;
+            --category-badge-text: #e0e0e0;
+            --progress-bar-bg: #3a3a3c; /* Darker gray for dark mode */
+            --progress-bar-fill-overbudget: #f87171; /* Lighter red for dark mode */
+            --footer-text-color: #5a5a5c;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overscroll-behavior: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 1rem; /* Ensure padding for content */
+        }
+        .ios-card {
+            background-color: var(--card-bg-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            transition: background-color 0.3s ease;
+            margin-bottom: 1.5rem;
+            width: 100%; /* Make cards take full width of their container */
+        }
+        .ios-card:last-child { margin-bottom: 0; }
+        .input-group { position: relative; }
+        .ios-input, .ios-select-native {
+            background-color: var(--input-bg-color); color: var(--input-text-color);
+            border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.75rem 1rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease, color 0.3s ease;
+            width: 100%;
+        }
+        .ios-input.pr-10 { padding-right: 2.5rem; }
+        .ios-input::placeholder { color: var(--text-muted-color); opacity: 0.7; }
+        .ios-input:focus, .ios-select-native:focus {
+            border-color: var(--ios-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); outline: none;
+        }
+        .password-toggle {
+            position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%);
+            cursor: pointer; color: var(--icon-color); padding: 0.25rem;
+        }
+        .password-toggle svg { width: 1.25rem; height: 1.25rem; }
+
+        .ios-button {
+            background-color: var(--button-primary-bg); color: var(--button-primary-text);
+            font-weight: 500; padding: 0.75rem 1.5rem; border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out; text-align: center;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .ios-button svg { margin-right: 0.5rem; }
+        .ios-button:hover { background-color: #005bb5; }
+        .ios-button:disabled {
+            background-color: var(--button-secondary-bg); color: var(--text-muted-color); cursor: not-allowed;
+        }
+        html.dark .ios-button:disabled { background-color: #2c2c2e; color: #555; }
+
+        .ios-button-secondary {
+            background-color: var(--button-secondary-bg); color: var(--button-secondary-text);
+            font-weight: 500; padding: 0.75rem 1.5rem; border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out; text-align: center;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .ios-button-secondary svg { margin-right: 0.5rem; }
+        .ios-button-secondary:hover { background-color: var(--button-secondary-hover-bg); }
+        .ios-button-secondary:disabled { background-color: #e0e0e0; color: #a0a0a0; cursor: not-allowed; }
+        html.dark .ios-button-secondary:disabled { background-color: #252527; color: #505050; }
+        
+        .ios-icon-button {
+            background-color: transparent; color: var(--link-color); padding: 0.5rem; border-radius: 50%;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        .ios-icon-button:hover { background-color: rgba(0, 122, 255, 0.1); }
+        .ios-icon-button svg { width: 1.25rem; height: 1.25rem; }
+
+        .ios-list-item {
+            border-bottom: 1px solid var(--border-color); padding: 0.75rem 0; transition: border-color 0.3s ease;
+        }
+        .ios-list-item:last-child { border-bottom: none; }
+        .category-badge {
+            background-color: var(--category-badge-bg); color: var(--category-badge-text);
+            padding: 0.2rem 0.6rem; border-radius: 0.75rem; font-size: 0.75rem;
+            font-weight: 500; display: inline-block; margin-top: 0.25rem;
+        }
+        
+        .loading-spinner, .ai-loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1); border-left-color: var(--ios-blue);
+            border-radius: 50%; width: 40px; height: 40px;
+            animation: spin 1s linear infinite; margin: 2rem auto;
+        }
+        .ai-loading-spinner { width: 20px; height: 20px; margin: 0; }
+        html.dark .loading-spinner, html.dark .ai-loading-spinner { border-left-color: var(--link-color); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .page { opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+        .page.active { opacity: 1; transform: translateY(0); }
+        .hidden-initially { display: none; }
+        .hidden { display: none !important; }
+
+        .ios-select { position: relative; display: inline-block; width: 100%; }
+        .ios-select select {
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            background-color: var(--input-bg-color); color: var(--input-text-color);
+            border: 1px solid var(--border-color); border-radius: 0.5rem;
+            padding: 0.75rem 2.5rem 0.75rem 1rem; width: 100%; cursor: pointer;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease, color 0.3s ease;
+        }
+        .ios-select::after {
+            content: ''; position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%);
+            width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent;
+            border-top: 6px solid var(--icon-color); pointer-events: none;
+        }
+        .ios-select select:focus {
+            border-color: var(--ios-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); outline: none;
+        }
+        html.dark .ios-select::after { border-top-color: var(--icon-color); }
+
+        .progress-bar-container {
+            width: 100%; background-color: var(--progress-bar-bg); border-radius: 0.25rem;
+            height: 0.75rem; overflow: hidden; margin-top: 0.25rem;
+        }
+        .progress-bar-fill {
+            height: 100%; background-color: var(--progress-bar-fill);
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+            border-radius: 0.25rem;
+        }
+        .progress-bar-fill.overbudget { background-color: var(--progress-bar-fill-overbudget); }
+
+        .text-primary { color: var(--text-color); }
+        .text-muted { color: var(--text-muted-color); }
+        .text-link { color: var(--link-color); }
+        .text-error { color: var(--error-text-color); }
+        .text-success { color: var(--success-text-color); }
+        .text-warning { color: var(--warning-text-color); }
+        .border-primary { border-color: var(--border-color); }
+
+        .delete-expense-btn { color: var(--delete-button-text-color); }
+        .delete-expense-btn:hover { background-color: var(--delete-button-hover-bg) !important; }
+        #auth-theme-toggle svg { color: var(--icon-color); }
+        #auth-theme-toggle:hover svg { color: var(--text-color); }
+        
+        #expense-chart-container {
+            background-color: var(--card-bg-color); padding: 1rem;
+            border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        html.dark .chartjs-tooltip { background: #333 !important; color: white !important; border-color: #555 !important; }
+        html.dark .chartjs-tooltip-key { background-color: var(--ios-blue) !important; }
+
+        /* Disclaimer Modal */
+        #disclaimer-modal .ios-card { max-width: 500px; }
+        #disclaimer-modal-text { max-height: 60vh; overflow-y: auto; }
+        #disclaimer-modal-text .disclaimer-lang-text { margin-bottom: 0.75rem; } 
+        #disclaimer-modal-text .disclaimer-lang-text:last-child { margin-bottom: 0; }
+
+
+        /* Footer */
+        .app-footer {
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.875rem; /* 14px */
+            color: var(--footer-text-color);
+            width: 100%;
+            margin-top: auto; /* Pushes footer to bottom if content is short */
+        }
+        /* Ensure auth page header elements stay in order regardless of dir */
+        #auth-page .ios-card > div:first-child {
+            direction: ltr; /* Force LTR for the container of toggles */
+        }
+        #auth-page .ios-card > div:first-child > * {
+            direction: var(--body-direction, ltr); /* Revert children to body's direction or LTR */
+        }
+
+    </style>
+</head>
+<body>
+    <div id="loading-indicator" class="fixed inset-0 bg-white/80 dark:bg-black/80 flex items-center justify-center z-[70] hidden-initially">
+        <div class="loading-spinner"></div>
+    </div>
+    <div id="message-modal" class="fixed inset-0 bg-black/30 flex hidden-initially items-center justify-center z-[60] p-4">
+        <div id="message-modal-content" class="ios-card max-w-sm w-full !mb-0">
+            <h3 id="message-modal-title" class="text-lg font-medium text-primary mb-2">Message</h3>
+            <p id="message-modal-text" class="text-sm text-muted mb-4">This is a message.</p>
+            <button id="message-modal-close" class="ios-button w-full">OK</button>
+        </div>
+    </div>
+    <!-- Disclaimer Modal -->
+    <div id="disclaimer-modal" class="fixed inset-0 bg-black/50 flex hidden-initially items-center justify-center z-[80] p-4 backdrop-blur-sm">
+        <div class="ios-card w-full">
+            <h3 id="disclaimer-modal-title" class="text-xl font-semibold text-primary mb-3 text-center">Disclaimer</h3>
+            <div id="disclaimer-modal-text" class="text-sm text-muted mb-6 space-y-0">
+                <p id="disclaimer-en-text" class="disclaimer-lang-text"></p>
+                <hr id="disclaimer-hr" class="border-primary hidden">
+                <p id="disclaimer-ur-text" dir="rtl" class="text-right disclaimer-lang-text"></p>
+            </div>
+            <button id="disclaimer-accept-button" class="ios-button w-full">Accept & Continue</button>
+        </div>
+    </div>
+
+
+    <div class="main-content-area">
+        <!-- Auth Page -->
+        <div id="auth-page" class="page w-full max-w-md">
+            <div class="ios-card !mb-0">
+                 <!-- Auth Page Header: Theme and Language Toggles -->
+                <div class="flex justify-end items-center mb-4 px-1 space-x-2"> 
+                    <button id="auth-theme-toggle" title="Toggle theme" class="p-2 rounded-full hover:bg-gray-500/10">
+                        <svg id="auth-theme-icon-light" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12h2.25m.386-6.364l1.591 1.591" /></svg>
+                        <svg id="auth-theme-icon-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>
+                    </button>
+                    <button id="auth-language-toggle" class="ios-button-secondary text-sm px-3 py-1 !font-medium">EN</button>
+                </div>
+                <img src="C:\Users\IKRAM-K\Desktop\PennyWise\Logo.jpg"alt="PennyWise Logo" class="mx-auto mb-6 h-20 w-20 rounded-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/80x80/cccccc/333333?text=Logo';">
+                <h1 id="auth-title" class="text-3xl font-bold text-center mb-2 text-primary">PennyWise</h1>
+                <p id="auth-subtitle" class="text-center text-muted mb-8">Apne akhrajaat manage karein</p>
+                <form id="login-form" class="space-y-4">
+                    <div><label for="login-username" id="login-username-label" class="block text-sm font-medium text-muted">Username</label><input type="text" id="login-username" name="login-username" required class="ios-input w-full mt-1"></div>
+                    <div><label for="login-password" id="login-password-label" class="block text-sm font-medium text-muted">Password</label><div class="input-group mt-1"><input type="password" id="login-password" name="login-password" required class="ios-input pr-10"><span class="password-toggle" data-target="login-password"><svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg><svg class="eye-slash-icon hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.575M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-18-18" /></svg></span></div></div>
+                    <button type="submit" id="login-button" class="ios-button w-full">Login</button><p id="login-error" class="text-error text-sm text-center h-4"></p>
+                    <p class="text-center text-sm text-muted"><span id="no-account-text">Account nahi hai?</span> <button type="button" id="show-signup-button" class="font-medium text-link hover:underline">Sign Up</button></p>
+                </form>
+                <form id="signup-form" class="space-y-4 hidden-initially">
+                    <div><label for="signup-fullname" id="signup-fullname-label" class="block text-sm font-medium text-muted">Full Name</label><input type="text" id="signup-fullname" name="signup-fullname" required class="ios-input w-full mt-1"></div>
+                    <div><label for="signup-email" id="signup-email-label" class="block text-sm font-medium text-muted">Email</label><input type="email" id="signup-email" name="signup-email" required class="ios-input w-full mt-1"></div>
+                    <div><label for="signup-password" id="signup-password-label" class="block text-sm font-medium text-muted">Password</label><div class="input-group mt-1"><input type="password" id="signup-password" name="signup-password" required class="ios-input pr-10"><span class="password-toggle" data-target="signup-password"><svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg><svg class="eye-slash-icon hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.575M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-18-18" /></svg></span></div></div>
+                    <div><label for="signup-confirm-password" id="signup-confirm-password-label" class="block text-sm font-medium text-muted">Confirm Password</label><div class="input-group mt-1"><input type="password" id="signup-confirm-password" name="signup-confirm-password" required class="ios-input pr-10"><span class="password-toggle" data-target="signup-confirm-password"><svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg><svg class="eye-slash-icon hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.575M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-18-18" /></svg></span></div></div>
+                    <button type="submit" id="signup-button" class="ios-button w-full">Sign Up</button><p id="signup-error" class="text-error text-sm text-center h-4"></p>
+                    <p class="text-center text-sm text-muted"><span id="has-account-text">Pehle se account hai?</span> <button type="button" id="show-login-button" class="font-medium text-link hover:underline">Login</button></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App Page -->
+        <div id="app-page" class="page w-full max-w-2xl hidden-initially">
+            <div class="ios-card">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-primary">
+                    <div><h1 id="app-title" class="text-2xl font-semibold text-primary">PennyWise Tracker</h1><p id="welcome-message" class="text-sm text-muted">Khush Amdeed, <span id="logged-in-username" class="font-medium">User</span>!</p></div>
+                    <button id="logout-button" class="ios-button-secondary text-sm">Logout</button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label for="language-select" id="language-select-label" class="block text-sm font-medium text-muted mb-1">Zubaan (Language)</label><div class="ios-select"><select id="language-select" class="w-full"><option value="en">English</option><option value="ur">اردو (Urdu)</option></select></div></div>
+                    <div><label for="currency-select" id="currency-select-label" class="block text-sm font-medium text-muted mb-1">Currency</label><div class="ios-select"><select id="currency-select" class="w-full"></select></div></div>
+                </div>
+            </div>
+
+            <!-- Set Monthly Budgets Card -->
+            <div class="ios-card">
+                <h2 id="set-budgets-title" class="text-xl font-medium text-primary mb-4">Set Monthly Budgets</h2>
+                <form id="set-budget-form" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label for="budget-category-select" id="budget-category-label" class="block text-sm font-medium text-muted">Category</label>
+                            <div class="ios-select mt-1">
+                                <select id="budget-category-select" required class="w-full"></select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="budget-amount-input" id="budget-amount-label" class="block text-sm font-medium text-muted">Budget Amount</label>
+                            <input type="number" id="budget-amount-input" step="0.01" min="0" required class="ios-input w-full mt-1">
+                        </div>
+                    </div>
+                    <button type="submit" id="set-budget-button" class="ios-button w-full sm:w-auto">Set Budget</button>
+                </form>
+            </div>
+
+            <!-- Budget Overview Card -->
+            <div class="ios-card">
+                <h2 id="budget-overview-title" class="text-xl font-medium text-primary mb-4">Budget Overview (Current Month)</h2>
+                <div id="budget-overview-container" class="space-y-4">
+                    <p id="no-budgets-set-text" class="text-muted text-center py-3">No budgets set for this month yet.</p>
+                    <!-- Budget items will be populated here -->
+                </div>
+            </div>
+
+
+            <div class="ios-card">
+                <form id="add-expense-form" class="space-y-4">
+                    <h2 id="add-expense-title" class="text-xl font-medium text-primary">Naya Kharcha Shamil Karein</h2>
+                    <div><label for="expense-description" id="expense-description-label" class="block text-sm font-medium text-muted">Tafseel (Description)</label><input type="text" id="expense-description" required class="ios-input w-full mt-1"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div><label for="expense-amount" id="expense-amount-label" class="block text-sm font-medium text-muted">Raqam (Amount)</label><input type="number" id="expense-amount" step="0.01" required class="ios-input w-full mt-1"></div>
+                        <div><label for="expense-category" id="expense-category-label" class="block text-sm font-medium text-muted">Zمره (Category)</label><div class="ios-select mt-1"><select id="expense-category" required class="w-full"></select></div></div>
+                        <div><label for="expense-date" id="expense-date-label" class="block text-sm font-medium text-muted">Tareekh (Date)</label><input type="date" id="expense-date" required class="ios-input w-full mt-1"></div>
+                    </div>
+                    <button type="submit" id="add-expense-button" class="ios-button w-full sm:w-auto">Kharcha Shamil Karein</button>
+                </form>
+            </div>
+            
+            <div class="ios-card">
+                <div>
+                    <h2 id="expense-list-title" class="text-xl font-medium text-primary mb-3">Aapke Akhrajaat</h2>
+                    <div id="expense-list-container" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                        <p id="no-expenses-text" class="text-muted text-center py-4">Abhi tak koi akhrajaat nahi.</p>
+                    </div>
+                    <div id="total-expenses-container" class="mt-6 pt-4 border-t border-primary text-right">
+                        <p class="text-lg font-semibold text-primary"><span id="total-expenses-label">Majmoi Akhrajaat:</span> <span id="total-expenses-amount" class="text-link font-bold">PKR 0.00</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ios-card">
+                <h2 id="expense-graph-title" class="text-xl font-medium text-primary mb-4">Expense Graph</h2>
+                <div id="expense-chart-container"><canvas id="expense-chart"></canvas></div>
+                <p id="no-data-for-graph-text" class="text-muted text-center py-4 hidden">Not enough data to display graph.</p>
+            </div>
+
+            <div class="ios-card">
+                <h2 id="monthly-report-title" class="text-xl font-medium text-primary mb-4">Monthly Report</h2>
+                <div class="space-y-4">
+                    <div><label for="monthly-income" id="monthly-income-label" class="block text-sm font-medium text-muted">Mahana Aamdani (Current Month)</label><input type="number" id="monthly-income" step="0.01" placeholder="Enter your income" class="ios-input w-full mt-1"></div>
+                    <div class="flex space-x-3">
+                        <button id="generate-report-button" class="ios-button flex-1">Report Generate Karein</button>
+                        <button id="download-report-button" class="ios-button-secondary flex-1" disabled>Report Download Karein</button>
+                    </div>
+                    <div id="report-output" class="mt-4 space-y-2 text-sm text-muted"></div>
+                </div>
+            </div>
+
+            <div class="ios-card">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 id="ai-suggestion-title" class="text-xl font-medium text-primary">AI Savings Tip</h2>
+                    <button id="get-ai-suggestion-button" class="ios-icon-button" title="Get New AI Tip">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" /></svg>
+                    </button>
+                </div>
+                <div id="ai-suggestion-loading" class="ai-loading-spinner hidden-initially"></div>
+                <p id="ai-suggestion-output" class="text-sm text-muted min-h-[3em]"></p>
+            </div>
+        </div> <!-- End of .main-content-area -->
+    </div>
+
+
+    <footer class="app-footer">
+        <p id="copyright-text">&copy; PennyWise <span id="copyright-year"></span></p>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const authPage = document.getElementById('auth-page');
+        const appPage = document.getElementById('app-page');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const showSignupButton = document.getElementById('show-signup-button');
+        const showLoginButton = document.getElementById('show-login-button');
+        const loginError = document.getElementById('login-error');
+        const signupError = document.getElementById('signup-error');
+        const loggedInUsernameDisplay = document.getElementById('logged-in-username');
+        const logoutButton = document.getElementById('logout-button');
+        const languageSelect = document.getElementById('language-select');
+        const currencySelect = document.getElementById('currency-select');
+        
+        const setBudgetForm = document.getElementById('set-budget-form');
+        const budgetCategorySelect = document.getElementById('budget-category-select');
+        const budgetAmountInput = document.getElementById('budget-amount-input');
+        const budgetOverviewContainer = document.getElementById('budget-overview-container');
+        const noBudgetsSetText = document.getElementById('no-budgets-set-text');
+
+        const addExpenseForm = document.getElementById('add-expense-form');
+        const expenseDescriptionInput = document.getElementById('expense-description');
+        const expenseAmountInput = document.getElementById('expense-amount');
+        const expenseCategorySelect = document.getElementById('expense-category');
+        const expenseDateInput = document.getElementById('expense-date');
+        const expenseListContainer = document.getElementById('expense-list-container');
+        const noExpensesText = document.getElementById('no-expenses-text');
+        const totalExpensesAmountDisplay = document.getElementById('total-expenses-amount');
+        const authThemeToggle = document.getElementById('auth-theme-toggle');
+        const authThemeIconLight = document.getElementById('auth-theme-icon-light');
+        const authThemeIconDark = document.getElementById('auth-theme-icon-dark');
+        const authLanguageToggle = document.getElementById('auth-language-toggle');
+        
+        const messageModal = document.getElementById('message-modal');
+        const messageModalTitle = document.getElementById('message-modal-title');
+        const messageModalText = document.getElementById('message-modal-text');
+        const messageModalClose = document.getElementById('message-modal-close');
+        
+        const disclaimerModal = document.getElementById('disclaimer-modal');
+        const disclaimerModalTitle = document.getElementById('disclaimer-modal-title');
+        const disclaimerEnText = document.getElementById('disclaimer-en-text');
+        const disclaimerUrText = document.getElementById('disclaimer-ur-text');
+        const disclaimerHr = document.getElementById('disclaimer-hr');
+        const disclaimerAcceptButton = document.getElementById('disclaimer-accept-button');
+
+        const expenseChartCanvas = document.getElementById('expense-chart');
+        const noDataForGraphText = document.getElementById('no-data-for-graph-text');
+        const monthlyIncomeInput = document.getElementById('monthly-income');
+        const generateReportButton = document.getElementById('generate-report-button');
+        const downloadReportButton = document.getElementById('download-report-button');
+        const reportOutput = document.getElementById('report-output');
+        const getAISuggestionButton = document.getElementById('get-ai-suggestion-button');
+        const aiSuggestionOutput = document.getElementById('ai-suggestion-output');
+        const aiSuggestionLoading = document.getElementById('ai-suggestion-loading');
+        const copyrightYearSpan = document.getElementById('copyright-year');
+        const copyrightTextSpan = document.getElementById('copyright-text');
+
+        // App State
+        let currentUser = null;
+        let userSettings = { language: 'en', currency: 'PKR' }; // Default language English
+        let userExpenses = [];
+        let userBudgets = {}; 
+        let currentTheme = localStorage.getItem('pennyWiseTheme') || 'light';
+        let expenseChartInstance = null;
+        let currentReportDataForDownload = null;
+        let afterDisclaimerAcceptedCallback = null; 
+
+        let defaultExpenseCategories = {
+            food: { en: "Food", ur: "کھانا" }, dining: { en: "Dining Out", ur: "باہر کھانا" },
+            fuel: { en: "Fuel", ur: "ایندھن" }, transport: { en: "Transport", ur: "آمد و رفت" },
+            utilities: { en: "Utilities", ur: "بل" }, fees: { en: "Fees", ur: "فیس" },
+            payments: { en: "Payments", ur: "ادائیگیاں" }, shopping: { en: "Shopping", ur: "خریداری" },
+            health: { en: "Health", ur: "صحت" }, entertainment: { en: "Entertainment", ur: "تفریح" },
+            other: { en: "Other", ur: "دیگر" }
+        };
+        let expenseCategories = JSON.parse(localStorage.getItem('pennyWiseAdminCategories')) || defaultExpenseCategories;
+
+        const defaultDisclaimerContent = {
+            en: "This expense tracker app is for personal finance management and educational purposes only. We do not guarantee the accuracy of the data or financial advice provided. Use the app responsibly and verify all your financial decisions independently. Your data is stored locally on your device and is not shared with any third parties.",
+            ur: "یہ ایپ صرف ذاتی مالی انتظام کے لیے ہے اور تعلیمی مقاصد کے لیے فراہم کی گئی ہے۔ ہم مالی مشورے یا ڈیٹا کی درستگی کی ضمانت نہیں دیتے۔ براہ کرم اپنی مالی فیصلے خود تصدیق کر کے کریں۔ آپ کا ڈیٹا آپ کے ڈیوائس پر محفوظ رہتا ہے اور کسی تیسرے فریق کے ساتھ شیئر نہیں کیا جاتا۔"
+        };
+        let adminDisclaimerTexts = JSON.parse(localStorage.getItem('pennyWiseAdminDisclaimers')) || defaultDisclaimerContent;
+
+         const uiStrings = {
+            en: {
+                authTitle: "PennyWise", authSubtitle: "Manage your expenses wisely", loginUsernameLabel: "Username",
+                loginPasswordLabel: "Password", loginButton: "Login", noAccountText: "Don't have an account?",
+                showSignupButton: "Sign Up", signupFullnameLabel: "Full Name", signupEmailLabel: "Email",
+                signupPasswordLabel: "Password", signupConfirmPasswordLabel: "Confirm Password", signupButton: "Sign Up",
+                hasAccountText: "Already have an account?", showLoginButton: "Login", appTitle: "PennyWise Tracker",
+                welcomeMessage: "Welcome, ", logoutButton: "Logout", languageSelectLabel: "Language",
+                currencySelectLabel: "Currency", 
+                setBudgetsTitle: "Set Monthly Budgets", budgetCategoryLabel: "Category", budgetAmountLabel: "Budget Amount",
+                setBudgetButton: "Set Budget", budgetOverviewTitle: "Budget Overview (Current Month)",
+                noBudgetsSetText: "No budgets set for this month yet.", budgetLabel: "Budget:", spentLabel: "Spent:",
+                addExpenseTitle: "Add New Expense", expenseDescriptionLabel: "Description",
+                expenseAmountLabel: "Amount", expenseCategoryLabel: "Category", expenseDateLabel: "Date", addExpenseButton: "Add Expense",
+                expenseListTitle: "Your Expenses", noExpensesText: "No expenses yet.", totalExpensesLabel: "Total Expenses:",
+                deleteButton: "Delete", passwordMismatch: "Passwords do not match.",
+                userExists: "This email or generated username might already be in use. Try a different email.",
+                signupSuccessTitle: "Signup Successful", signupSuccessMessage: "Account created! Your username is: {username}. Please login.",
+                invalidCredentialsTitle: "Login Failed", invalidCredentialsMessage: "Invalid username or password.",
+                fillAllFieldsTitle: "Input Error", fillAllFieldsMessage: "Please fill in all required fields.",
+                invalidEmailTitle: "Invalid Email", invalidEmailMessage: "Please enter a valid email address.",
+                showPasswordTitle: "Show password", hidePasswordTitle: "Hide password",
+                expenseGraphTitle: "Expense Graph", noDataForGraphText: "Not enough data for graph. Add an expense.",
+                monthlyReportTitle: "Monthly Report", monthlyIncomeLabel: "Monthly Income (Current Month)",
+                generateReportButton: "Generate Report", downloadReportButton: "Download Report",
+                reportIncomeLabel: "Income:", reportExpensesLabel: "Total Expenses:",
+                reportSavingsLabel: "Savings:", reportOverspentLabel: "Overspent:",
+                reportNoIncome: "Please enter income for report.", reportNoExpensesThisMonth: "No expenses this month.", 
+                reportCatSummaryTitle: "Expenses by Category:", aiSuggestionTitle: "AI Savings Tip", 
+                getAISuggestionButton: "Ask AI Tip", aiSuggestionLoading: "Fetching tip...", 
+                aiSuggestionError: "Could not fetch tip. Try again.",
+                budgetSetSuccess: "Budget set successfully!", budgetUpdatedSuccess: "Budget updated successfully!",
+                invalidBudgetAmount: "Please enter a valid positive budget amount.",
+                copyrightText: "&copy; PennyWise",
+                disclaimerTitle: "Disclaimer", 
+                disclaimerEnText: adminDisclaimerTexts.en, 
+                disclaimerUrText: adminDisclaimerTexts.ur, 
+                disclaimerAcceptButton: "Accept & Continue" 
+            },
+            ur: {
+                authTitle: "پینی وائز", authSubtitle: "اپنے اخراجات احسن طریقے سے منظم کریں", loginUsernameLabel: "صارف کا نام",
+                loginPasswordLabel: "پاس ورڈ", loginButton: "لاگ ان کریں", noAccountText: "اکاؤنٹ نہیں ہے؟",
+                showSignupButton: "سائن اپ کریں", signupFullnameLabel: "پورا نام", signupEmailLabel: "ای میل",
+                signupPasswordLabel: "پاس ورڈ", signupConfirmPasswordLabel: "پاس ورڈ کی تصدیق کریں", signupButton: "سائن اپ کریں",
+                hasAccountText: "پہلے سے اکاؤنٹ ہے؟", showLoginButton: "لاگ ان کریں", appTitle: "پینی وائز ٹریکر",
+                welcomeMessage: "خوش آمدید، ", logoutButton: "لاگ آؤٹ", languageSelectLabel: "زبان",
+                currencySelectLabel: "کرنسی",
+                setBudgetsTitle: "ماہانہ بجٹ سیٹ کریں", budgetCategoryLabel: "زمرہ", budgetAmountLabel: "بجٹ کی رقم",
+                setBudgetButton: "بجٹ سیٹ کریں", budgetOverviewTitle: "بجٹ کا جائزہ (موجودہ مہینہ)",
+                noBudgetsSetText: "اس مہینے کے لیے ابھی تک کوئی بجٹ سیٹ نہیں کیا گیا۔", budgetLabel: "بجٹ:", spentLabel: "خرچ:",
+                addExpenseTitle: "نیا خرچہ شامل کریں", expenseDescriptionLabel: "تفصیل",
+                expenseAmountLabel: "رقم", expenseCategoryLabel: "زمرہ", expenseDateLabel: "تاریخ", addExpenseButton: "خرچہ شامل کریں",
+                expenseListTitle: "آپ کے اخراجات", noExpensesText: "ابھی تک کوئی اخراجات نہیں۔", totalExpensesLabel: "مجموعی اخراجات:",
+                deleteButton: "حذف کریں", passwordMismatch: "پاس ورڈ مماثل نہیں ہیں۔",
+                userExists: "یہ ای میل یا اس سے بننے والا صارف نام پہلے سے استعمال میں ہو سکتا ہے۔ براہ کرم دوسرا ای میل آزمائیں۔",
+                signupSuccessTitle: "سائن اپ کامیاب", signupSuccessMessage: "اکاؤنٹ بن گیا! آپ کا صارف نام یہ ہے: {username}۔ براہ کرم لاگ ان کریں۔",
+                invalidCredentialsTitle: "لاگ ان ناکام", invalidCredentialsMessage: " غلط صارف نام یا پاس ورڈ۔",
+                fillAllFieldsTitle: "اندراج میں خرابی", fillAllFieldsMessage: "براہ کرم تمام ضروری خانے پُر کریں۔",
+                invalidEmailTitle: " غلط ای میل", invalidEmailMessage: "براہ کرم درست ای میل ایڈریس درج کریں۔",
+                showPasswordTitle: "پاس ورڈ دکھائیں", hidePasswordTitle: "پاس ورڈ چھپائیں",
+                expenseGraphTitle: "اخراجات کا گراف", noDataForGraphText: "گراف کے لیے ڈیٹا نہیں۔ ایک خرچہ شامل کریں۔",
+                monthlyReportTitle: "ماہانہ رپورٹ", monthlyIncomeLabel: "ماہانہ آمدنی (موجودہ مہینہ)",
+                generateReportButton: "رپورٹ جنریٹ کریں", downloadReportButton: "رپورٹ ڈاؤن لوڈ کریں",
+                reportIncomeLabel: "آمدنی:", reportExpensesLabel: "کل اخراجات:",
+                reportSavingsLabel: "بچت:", reportOverspentLabel: "زائد خرچ:",
+                reportNoIncome: "رپورٹ کے لیے آمدنی درج کریں۔", reportNoExpensesThisMonth: "اس ماہ کوئی اخراجات نہیں۔", 
+                reportCatSummaryTitle: "زمرہ کے لحاظ سے اخراجات:", aiSuggestionTitle: "AI بچت ٹپ", 
+                getAISuggestionButton: "AI ٹپ پوچھیں", aiSuggestionLoading: "ٹپ حاصل کی جا رہی ہے...", 
+                aiSuggestionError: "ٹپ حاصل نہیں ہو سکی۔ دوبارہ کوشش کریں۔",
+                budgetSetSuccess: "بجٹ کامیابی سے سیٹ ہو گیا!", budgetUpdatedSuccess: "بجٹ کامیابی سے اپ ڈیٹ ہو گیا!",
+                invalidBudgetAmount: "براہ کرم بجٹ کی درست مثبت رقم درج کریں۔",
+                copyrightText: "کاپی رائٹ © پینی وائز",
+                disclaimerTitle: "Disclaimer", 
+                disclaimerEnText: adminDisclaimerTexts.en, 
+                disclaimerUrText: adminDisclaimerTexts.ur, 
+                disclaimerAcceptButton: "Accept & Continue"
+            }
+        };
+
+        const currencies = {
+            "PKR": { name: "Pakistani Rupee", symbol: "Rs" }, "USD": { name: "US Dollar", symbol: "$" }, "EUR": { name: "Euro", symbol: "€" }, 
+            "GBP": { name: "British Pound", symbol: "£" }, "JPY": { name: "Japanese Yen", symbol: "¥" }, "CAD": { name: "Canadian Dollar", symbol: "CA$" },
+            "AUD": { name: "Australian Dollar", symbol: "A$" }, "INR": { name: "Indian Rupee", symbol: "₹" }, "AED": { name: "UAE Dirham", symbol: "AED" },
+            "SAR": { name: "Saudi Riyal", symbol: "SAR" }
+        };
+
+        const showLoading = (show) => { loadingIndicator.style.display = show ? 'flex' : 'none'; };
+        const showMessageModal = (title, message) => { messageModalTitle.textContent = title; messageModalText.innerHTML = message; messageModal.style.display = 'flex'; };
+        messageModalClose.addEventListener('click', () => messageModal.style.display = 'none');
+        
+        const showDisclaimerModal = (onAcceptCallback) => {
+            const lang = userSettings.language;
+            disclaimerModalTitle.textContent = uiStrings[lang].disclaimerTitle;
+            disclaimerAcceptButton.textContent = uiStrings[lang].disclaimerAcceptButton;
+
+            disclaimerEnText.classList.add('hidden');
+            disclaimerUrText.classList.add('hidden');
+            disclaimerHr.classList.add('hidden'); // HR is not needed if only one lang shown
+
+            if (lang === 'en') {
+                disclaimerEnText.textContent = adminDisclaimerTexts.en;
+                disclaimerEnText.classList.remove('hidden');
+            } else { // 'ur'
+                disclaimerUrText.textContent = adminDisclaimerTexts.ur;
+                disclaimerUrText.classList.remove('hidden');
+            }
+            
+            disclaimerModal.style.display = 'flex';
+            if (onAcceptCallback) {
+                afterDisclaimerAcceptedCallback = onAcceptCallback;
+            }
+        };
+
+        disclaimerAcceptButton.addEventListener('click', () => {
+            disclaimerModal.style.display = 'none';
+            // No need to set sessionStorage item here, as it's part of signup flow only
+            if (afterDisclaimerAcceptedCallback) {
+                afterDisclaimerAcceptedCallback();
+                afterDisclaimerAcceptedCallback = null; 
+            }
+        });
+
+
+        const switchPage = (pageToShow) => {
+            showLoading(true); [authPage, appPage].forEach(p => p.classList.remove('active'));
+            setTimeout(() => {
+                [authPage, appPage].forEach(p => p.style.display = 'none');
+                const targetPage = pageToShow === 'auth' ? authPage : appPage;
+                targetPage.style.display = 'block';
+                setTimeout(() => {
+                    targetPage.classList.add('active');
+                }, 50); 
+                showLoading(false);
+            }, 300);
+        };
+        const applyTheme = (theme) => {
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            if(authThemeIconLight) authThemeIconLight.classList.toggle('hidden', theme === 'dark');
+            if(authThemeIconDark) authThemeIconDark.classList.toggle('hidden', theme !== 'dark');
+            currentTheme = theme; localStorage.setItem('pennyWiseTheme', theme);
+            document.body.style.setProperty('--body-direction', document.body.style.direction || 'ltr'); // For auth header
+            if (expenseChartInstance) { setTimeout(renderExpenseGraph, 50); }
+            renderBudgetOverview(); 
+        };
+        const toggleTheme = () => { applyTheme(currentTheme === 'light' ? 'dark' : 'light'); };
+        const updateAuthLanguageToggleText = () => { if (authLanguageToggle) { authLanguageToggle.textContent = userSettings.language === 'en' ? 'UR' : 'EN'; }};
+
+        const populateCategoryDropdowns = () => {
+            const lang = userSettings.language;
+            const currentCategories = expenseCategories; 
+
+            expenseCategorySelect.innerHTML = `<option value="" disabled selected>${uiStrings[lang].expenseCategoryLabel}</option>`;
+            for (const key in currentCategories) {
+                const option = document.createElement('option'); option.value = key;
+                option.textContent = currentCategories[key][lang] || currentCategories[key]['en']; 
+                expenseCategorySelect.appendChild(option);
+            }
+            budgetCategorySelect.innerHTML = `<option value="" disabled selected>${uiStrings[lang].budgetCategoryLabel}</option>`;
+             for (const key in currentCategories) {
+                const option = document.createElement('option'); option.value = key;
+                option.textContent = currentCategories[key][lang] || currentCategories[key]['en'];
+                budgetCategorySelect.appendChild(option);
+            }
+        };
+        
+        const updateUIWithLanguage = () => {
+            const lang = userSettings.language; 
+            uiStrings.en.disclaimerEnText = adminDisclaimerTexts.en;
+            uiStrings.en.disclaimerUrText = adminDisclaimerTexts.ur;
+            uiStrings.ur.disclaimerEnText = adminDisclaimerTexts.en; 
+            uiStrings.ur.disclaimerUrText = adminDisclaimerTexts.ur;
+
+            const strings = uiStrings[lang];
+
+            document.documentElement.lang = lang; 
+            const bodyDirection = lang === 'ur' ? 'rtl' : 'ltr';
+            document.body.style.direction = bodyDirection;
+            document.body.style.setProperty('--body-direction', bodyDirection); // For auth header CSS
+
+            const elementsToUpdate = { 
+                'auth-title': 'authTitle', 'auth-subtitle': 'authSubtitle', 'login-username-label': 'loginUsernameLabel',
+                'login-password-label': 'loginPasswordLabel', 'login-button': 'loginButton', 'no-account-text': 'noAccountText',
+                'show-signup-button': 'showSignupButton', 'signup-fullname-label': 'signupFullnameLabel',
+                'signup-email-label': 'signupEmailLabel', 'signup-password-label': 'signupPasswordLabel',
+                'signup-confirm-password-label': 'signupConfirmPasswordLabel', 'signup-button': 'signupButton',
+                'has-account-text': 'hasAccountText', 'show-login-button': 'showLoginButton'
+            };
+            for (const id in elementsToUpdate) { const el = document.getElementById(id); if (el) el.textContent = strings[elementsToUpdate[id]];}
+            
+            if (disclaimerModal.style.display === 'flex' || disclaimerModal.classList.contains('flex')) { 
+                 showDisclaimerModal(afterDisclaimerAcceptedCallback); 
+            }
+
+
+            if (currentUser) {
+                 const appElementsToUpdate = {
+                    'app-title': 'appTitle', 'logout-button': 'logoutButton', 'language-select-label': 'languageSelectLabel',
+                    'currency-select-label': 'currencySelectLabel', 
+                    'set-budgets-title': 'setBudgetsTitle', 'budget-category-label': 'budgetCategoryLabel', 
+                    'budget-amount-label': 'budgetAmountLabel', 'set-budget-button': 'setBudgetButton',
+                    'budget-overview-title': 'budgetOverviewTitle', 'no-budgets-set-text': 'noBudgetsSetText',
+                    'add-expense-title': 'addExpenseTitle', 'expense-description-label': 'expenseDescriptionLabel', 
+                    'expense-amount-label': 'expenseAmountLabel', 'expense-category-label': 'expenseCategoryLabel', 
+                    'expense-date-label': 'expenseDateLabel', 'add-expense-button': 'addExpenseButton', 
+                    'expense-list-title': 'expenseListTitle', 'no-expenses-text': 'noExpensesText', 
+                    'total-expenses-label': 'totalExpensesLabel', 'expense-graph-title': 'expenseGraphTitle', 
+                    'no-data-for-graph-text': 'noDataForGraphText', 'monthly-report-title': 'monthlyReportTitle', 
+                    'monthly-income-label': 'monthlyIncomeLabel', 'generate-report-button': 'generateReportButton', 
+                    'download-report-button': 'downloadReportButton', 'ai-suggestion-title': 'aiSuggestionTitle',
+                 };
+                for (const id in appElementsToUpdate) { const el = document.getElementById(id); if (el) el.textContent = strings[appElementsToUpdate[id]];}
+                if(document.getElementById('welcome-message')) { document.getElementById('welcome-message').firstChild.textContent = strings.welcomeMessage; }
+                if(getAISuggestionButton) getAISuggestionButton.title = strings.getAISuggestionButton;
+            }
+            updateAuthLanguageToggleText(); 
+            populateCategoryDropdowns(); 
+            renderExpenses(); 
+            updatePasswordToggleTitles(); if(reportOutput) reportOutput.innerHTML = '';
+            if(aiSuggestionOutput) aiSuggestionOutput.textContent = '';
+            if(downloadReportButton) downloadReportButton.disabled = true;
+            renderBudgetOverview(); 
+            if(copyrightTextSpan) copyrightTextSpan.innerHTML = `${strings.copyrightText} <span id="copyright-year">${new Date().getFullYear()}</span>`;
+        };
+        
+        const updatePasswordToggleTitles = () => {
+            const lang = userSettings.language;
+            document.querySelectorAll('.password-toggle').forEach(toggle => {
+                const targetId = toggle.dataset.target; const inputField = document.getElementById(targetId);
+                if (inputField) { toggle.title = inputField.type === 'password' ? uiStrings[lang].showPasswordTitle : uiStrings[lang].hidePasswordTitle; }
+            });
+        };
+
+        const getUsers = () => JSON.parse(localStorage.getItem('pennyWiseUsers')) || [];
+        const saveUsers = (users) => localStorage.setItem('pennyWiseUsers', JSON.stringify(users)); 
+        const getUserSettings = (username) => JSON.parse(localStorage.getItem(`pennyWiseSettings_${username}`)) || { language: userSettings.language, currency: 'PKR' };
+        const saveUserSettings = (username, settings) => localStorage.setItem(`pennyWiseSettings_${username}`, JSON.stringify(settings));
+        const getUserExpenses = (username) => JSON.parse(localStorage.getItem(`pennyWiseExpenses_${username}`)) || [];
+        const saveUserExpenses = (username, expenses) => localStorage.setItem(`pennyWiseExpenses_${username}`, JSON.stringify(expenses));
+
+        const getCurrentMonthYearKey = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; };
+        const getUserBudgets = (username) => { const monthKey = getCurrentMonthYearKey(); return JSON.parse(localStorage.getItem(`pennyWiseBudgets_${username}_${monthKey}`)) || {}; };
+        const saveUserBudgets = (username, budgets) => { const monthKey = getCurrentMonthYearKey(); localStorage.setItem(`pennyWiseBudgets_${username}_${monthKey}`, JSON.stringify(budgets)); };
+
+        const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        const generateUniqueUsername = (email, users) => {
+            let baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/gi, '');
+            if (!baseUsername) baseUsername = 'user'; let username = baseUsername, counter = 1;
+            while (users.find(user => user.username === username)) { username = `${baseUsername}${counter++}`; } return username;
+        };
+        
+        const handleSignup = (event) => {
+            event.preventDefault(); 
+            showLoading(true); 
+            signupError.textContent = '';
+            const fullName = signupForm['signup-fullname'].value.trim(); 
+            const email = signupForm['signup-email'].value.trim();
+            const password = signupForm['signup-password'].value; 
+            const confirmPassword = signupForm['signup-confirm-password'].value;
+            const lang = userSettings.language;
+
+            if (!fullName || !email || !password || !confirmPassword) { 
+                signupError.textContent = uiStrings[lang].fillAllFieldsMessage; 
+                showLoading(false); 
+                return; 
+            }
+            if (!isValidEmail(email)) { 
+                signupError.textContent = uiStrings[lang].invalidEmailMessage; 
+                showLoading(false);
+                return; 
+            }
+            if (password.length < 6) { 
+                signupError.textContent = "Password must be at least 6 characters long."; 
+                showLoading(false);
+                return;
+            }
+            if (password !== confirmPassword) { 
+                signupError.textContent = uiStrings[lang].passwordMismatch; 
+                showLoading(false);
+                return; 
+            }
+            
+            const users = getUsers(); 
+            if (users.find(user => user.email === email)) { 
+                 signupError.textContent = uiStrings[lang].userExists; 
+                 showLoading(false);
+                 return; 
+            }
+            const username = generateUniqueUsername(email, users);
+             if (users.find(user => user.username === username)) { 
+                 signupError.textContent = uiStrings[lang].userExists; 
+                 showLoading(false);
+                 return; 
+            }
+
+            users.push({ fullName, email, username, password }); 
+            saveUsers(users); 
+            saveUserSettings(username, { language: userSettings.language, currency: 'PKR', fullName: fullName, email: email });
+            
+            localStorage.setItem(`pennyWiseDisclaimerShown_${username}`, 'false'); // Mark disclaimer as not shown for this new user
+
+            showDisclaimerModal(() => {
+                localStorage.setItem(`pennyWiseDisclaimerShown_${username}`, 'true'); // Mark as shown after acceptance
+                const successMsg = uiStrings[userSettings.language].signupSuccessMessage.replace('{username}', `<b>${username}</b>`);
+                showMessageModal(uiStrings[userSettings.language].signupSuccessTitle, successMsg);
+                signupForm.reset();
+                ['signup-password', 'signup-confirm-password'].forEach(id => {
+                    const field = document.getElementById(id); if (field) field.type = 'password';
+                    const toggle = document.querySelector(`.password-toggle[data-target="${id}"]`);
+                    if (toggle) { 
+                        toggle.querySelector('.eye-icon').classList.remove('hidden'); 
+                        toggle.querySelector('.eye-slash-icon').classList.add('hidden');
+                    }
+                });
+                loginForm.classList.remove('hidden-initially'); 
+                signupForm.classList.add('hidden-initially'); 
+                showLoading(false); 
+            });
+        };
+
+        const handleLogin = (event) => {
+            event.preventDefault(); showLoading(true); loginError.textContent = '';
+            const username = loginForm['login-username'].value.trim(); const password = loginForm['login-password'].value; const lang = userSettings.language;
+            if (!username || !password) { loginError.textContent = uiStrings[lang].fillAllFieldsMessage; showLoading(false); return; }
+            const users = getUsers(); const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                currentUser = user.username; localStorage.setItem('pennyWiseCurrentUser', currentUser);
+                loadUserSettings(); loadUserExpenses(); loadUserBudgetsState(); 
+                loggedInUsernameDisplay.textContent = user.fullName || currentUser;
+                switchPage('app'); updateUIWithLanguage(); 
+            } else { loginError.textContent = uiStrings[lang].invalidCredentialsMessage; showLoading(false); }
+        };
+        const handleLogout = () => {
+            showLoading(true); currentUser = null; localStorage.removeItem('pennyWiseCurrentUser');
+            userExpenses = []; userBudgets = {}; 
+            userSettings = { language: 'en', currency: 'PKR' }; 
+            
+            loginForm.reset(); signupForm.reset();
+            const loginPasswordField = document.getElementById('login-password'); if (loginPasswordField) loginPasswordField.type = 'password';
+            const loginPasswordToggle = document.querySelector('.password-toggle[data-target="login-password"]');
+            if (loginPasswordToggle) { loginPasswordToggle.querySelector('.eye-icon').classList.remove('hidden'); loginPasswordToggle.querySelector('.eye-slash-icon').classList.add('hidden');}
+            loginError.textContent = ''; signupError.textContent = ''; 
+            languageSelect.value = userSettings.language; 
+            
+            switchPage('auth'); 
+            updateUIWithLanguage(); 
+            showLoading(false);
+        };
+        
+        const populateCurrencies = () => {
+            currencySelect.innerHTML = '';
+            for (const code in currencies) {
+                const option = document.createElement('option'); option.value = code;
+                option.textContent = `${currencies[code].name} (${currencies[code].symbol})`;
+                if (code === userSettings.currency) option.selected = true; currencySelect.appendChild(option);
+            }
+        };
+        const loadUserSettings = () => {
+            if (currentUser) {
+                const loadedSettings = getUserSettings(currentUser);
+                userSettings.language = loadedSettings.language || 'en'; 
+                userSettings.currency = loadedSettings.currency || 'PKR';
+                userSettings.fullName = loadedSettings.fullName; userSettings.email = loadedSettings.email;
+            } else {
+                userSettings.language = 'en'; // Default to English if no user or no setting
+                userSettings.currency = 'PKR';
+            }
+            languageSelect.value = userSettings.language; 
+            populateCurrencies();
+        };
+        const handleAuthLanguageToggle = () => { 
+            userSettings.language = userSettings.language === 'en' ? 'ur' : 'en'; 
+            if (currentUser) {
+                 saveUserSettings(currentUser, userSettings);
+            }
+            updateUIWithLanguage(); 
+            languageSelect.value = userSettings.language; 
+        };
+        const handleLanguageChange = (event) => { 
+            userSettings.language = event.target.value; 
+            if (currentUser) saveUserSettings(currentUser, userSettings); 
+            updateUIWithLanguage(); 
+        };
+        const handleCurrencyChange = (event) => { 
+            userSettings.currency = event.target.value; 
+            if (currentUser) saveUserSettings(currentUser, userSettings); 
+            renderExpenses(); renderBudgetOverview(); 
+        };
+
+        const loadUserBudgetsState = () => {
+            if (currentUser) { userBudgets = getUserBudgets(currentUser); } 
+            else { userBudgets = {}; }
+            renderBudgetOverview();
+        };
+        const handleSetBudget = (event) => {
+            event.preventDefault();
+            const category = budgetCategorySelect.value; const amount = parseFloat(budgetAmountInput.value);
+            const lang = userSettings.language;
+            if (!category || isNaN(amount) || amount < 0) { showMessageModal(uiStrings[lang].fillAllFieldsTitle, uiStrings[lang].invalidBudgetAmount); return; }
+            const oldBudget = userBudgets[category]; userBudgets[category] = amount;
+            if (currentUser) { saveUserBudgets(currentUser, userBudgets); }
+            if (oldBudget !== undefined) { showMessageModal(uiStrings[lang].signupSuccessTitle, uiStrings[lang].budgetUpdatedSuccess); } 
+            else { showMessageModal(uiStrings[lang].signupSuccessTitle, uiStrings[lang].budgetSetSuccess); }
+            renderBudgetOverview(); setBudgetForm.reset(); budgetCategorySelect.value = "";
+        };
+        const renderBudgetOverview = () => {
+            budgetOverviewContainer.innerHTML = ''; const lang = userSettings.language;
+            const currencyInfo = currencies[userSettings.currency] || currencies.PKR; let budgetsExist = false;
+            const currentDate = new Date(); const currentMonth = currentDate.getMonth(); const currentYear = currentDate.getFullYear();
+            
+            const currentCategories = expenseCategories; 
+
+            for (const categoryKey in currentCategories) { 
+                const budgetAmount = userBudgets[categoryKey]; 
+                if (budgetAmount === undefined || budgetAmount === null) continue; budgetsExist = true;
+                
+                const categoryName = currentCategories[categoryKey][lang] || currentCategories[categoryKey]['en']; 
+                const expensesInThisCategoryThisMonth = userExpenses.filter(exp => {
+                    const expenseDate = new Date(exp.date);
+                    return exp.category === categoryKey && expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+                });
+                const spentAmount = expensesInThisCategoryThisMonth.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+                const percentageUsed = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0;
+                const isOverBudget = spentAmount > budgetAmount;
+                const budgetItemEl = document.createElement('div');
+                budgetItemEl.className = 'py-2 border-b border-primary last:border-b-0';
+                budgetItemEl.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-medium text-primary">${categoryName}</span>
+                        <span class="text-sm text-muted">
+                            ${uiStrings[lang].spentLabel} ${currencyInfo.symbol}${spentAmount.toFixed(2)} / 
+                            ${uiStrings[lang].budgetLabel} ${currencyInfo.symbol}${budgetAmount.toFixed(2)}
+                        </span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill ${isOverBudget ? 'overbudget' : ''}" style="width: ${Math.min(percentageUsed, 100)}%;"></div>
+                    </div>
+                    ${isOverBudget ? `<p class="text-xs text-error mt-1">${uiStrings[lang].reportOverspentLabel} ${currencyInfo.symbol}${(spentAmount - budgetAmount).toFixed(2)}</p>` : ''}`;
+                budgetOverviewContainer.appendChild(budgetItemEl);
+            }
+            noBudgetsSetText.classList.toggle('hidden', budgetsExist);
+        };
+
+        const loadUserExpenses = () => { if (currentUser) userExpenses = getUserExpenses(currentUser); renderExpenses(); };
+        const renderExpenses = () => {
+            expenseListContainer.innerHTML = '';
+            const currentCategories = expenseCategories; 
+
+            if (userExpenses.length === 0) { noExpensesText.style.display = 'block'; }
+            else {
+                noExpensesText.style.display = 'none';
+                userExpenses.slice().sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(expense => { 
+                    const expenseEl = document.createElement('div');
+                    expenseEl.className = 'ios-list-item flex justify-between items-start py-3';
+                    const currencyInfo = currencies[userSettings.currency] || currencies.PKR;
+                    const formattedAmount = `${currencyInfo.symbol} ${parseFloat(expense.amount).toFixed(2)}`;
+                    const categoryKey = expense.category || 'other';
+                    const categoryName = currentCategories[categoryKey] ? (currentCategories[categoryKey][userSettings.language] || currentCategories[categoryKey]['en']) : (defaultExpenseCategories.other[userSettings.language] || defaultExpenseCategories.other['en']);
+                    expenseEl.innerHTML = `<div class="flex-grow"><p class="font-medium text-primary">${expense.description}</p><p class="text-sm text-muted">${expense.date} - ${formattedAmount}</p><span class="category-badge">${categoryName}</span></div><button data-id="${expense.id}" class="delete-expense-btn ios-button-secondary text-sm px-3 py-1 !font-normal ml-2 shrink-0">${uiStrings[userSettings.language].deleteButton}</button>`;
+                    expenseListContainer.appendChild(expenseEl);
+                });
+            }
+            calculateTotalExpenses(); renderExpenseGraph(); renderBudgetOverview();
+            document.querySelectorAll('.delete-expense-btn').forEach(button => { button.addEventListener('click', handleDeleteExpense); });
+        };
+        const handleAddExpense = (event) => {
+            event.preventDefault();
+            const description = expenseDescriptionInput.value.trim(); const amount = parseFloat(expenseAmountInput.value);
+            const category = expenseCategorySelect.value; const date = expenseDateInput.value; const lang = userSettings.language;
+            if (!description || isNaN(amount) || amount <= 0 || !date || !category) { showMessageModal(uiStrings[lang].fillAllFieldsTitle, uiStrings[lang].fillAllFieldsMessage); return; }
+            const newExpense = { id: Date.now().toString(), description, amount, category, date };
+            userExpenses.push(newExpense); if (currentUser) saveUserExpenses(currentUser, userExpenses);
+            renderExpenses(); addExpenseForm.reset(); expenseDateInput.valueAsDate = new Date(); expenseCategorySelect.value = "";
+        };
+        const handleDeleteExpense = (event) => {
+            const expenseId = event.target.dataset.id;
+            userExpenses = userExpenses.filter(exp => exp.id !== expenseId);
+            if (currentUser) saveUserExpenses(currentUser, userExpenses); renderExpenses();
+        };
+        const calculateTotalExpenses = () => {
+            const total = userExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            const currencyInfo = currencies[userSettings.currency] || currencies.PKR;
+            totalExpensesAmountDisplay.textContent = `${currencyInfo.symbol} ${total.toFixed(2)}`;
+        };
+
+        const togglePasswordVisibility = (event) => {
+            const toggleButton = event.currentTarget; const targetInputId = toggleButton.dataset.target;
+            const targetInput = document.getElementById(targetInputId);
+            const eyeIcon = toggleButton.querySelector('.eye-icon'); const eyeSlashIcon = toggleButton.querySelector('.eye-slash-icon');
+            const lang = userSettings.language;
+            if (targetInput && eyeIcon && eyeSlashIcon) {
+                if (targetInput.type === 'password') {
+                    targetInput.type = 'text'; eyeIcon.classList.add('hidden'); eyeSlashIcon.classList.remove('hidden');
+                    toggleButton.title = uiStrings[lang].hidePasswordTitle;
+                } else {
+                    targetInput.type = 'password'; eyeIcon.classList.remove('hidden'); eyeSlashIcon.classList.add('hidden');
+                    toggleButton.title = uiStrings[lang].showPasswordTitle;
+                }
+            }
+        };
+
+        const renderExpenseGraph = () => {
+            if (!expenseChartCanvas) return;
+            const ctx = expenseChartCanvas.getContext('2d'); const lang = userSettings.language;
+            const currentCategories = expenseCategories; 
+
+            if (userExpenses.length === 0) {
+                expenseChartCanvas.classList.add('hidden'); noDataForGraphText.classList.remove('hidden');
+                noDataForGraphText.textContent = uiStrings[lang].noDataForGraphText;
+                if (expenseChartInstance) { expenseChartInstance.destroy(); expenseChartInstance = null; } return;
+            }
+            expenseChartCanvas.classList.remove('hidden'); noDataForGraphText.classList.add('hidden');
+            const expensesForGraph = userExpenses.slice(-10);
+            const labels = expensesForGraph.map(exp => exp.description.length > 15 ? exp.description.substring(0, 12) + '...' : exp.description);
+            const data = expensesForGraph.map(exp => parseFloat(exp.amount));
+            const currencyInfo = currencies[userSettings.currency] || currencies.PKR;
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const labelColor = isDarkMode ? '#E0E0E0' : '#333333';
+            if (expenseChartInstance) { expenseChartInstance.destroy(); }
+            expenseChartInstance = new Chart(ctx, {
+                type: 'bar', data: { labels: labels,
+                    datasets: [{ label: `${uiStrings[lang].expenseAmountLabel} (${currencyInfo.symbol})`, data: data, backgroundColor: 'rgba(0, 122, 255, 0.6)', borderColor: 'rgba(0, 122, 255, 1)', borderWidth: 1, borderRadius: 4, }]
+                },
+                options: { responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { color: labelColor, callback: function(value) { return currencyInfo.symbol + ' ' + value; }}, grid: { color: gridColor }}, x: { ticks: { color: labelColor }, grid: { display: false }} },
+                    plugins: { legend: { display: true, labels: { color: labelColor } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || ''; if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) { label += currencyInfo.symbol + ' ' + context.parsed.y.toFixed(2); }
+                                    const expenseIndex = context.dataIndex; const expense = expensesForGraph[expenseIndex];
+                                    if (expense && expense.category) { 
+                                        const categoryName = currentCategories[expense.category] ? (currentCategories[expense.category][lang] || currentCategories[expense.category]['en']) : expense.category; 
+                                        label += ` (${categoryName})`; 
+                                    }
+                                    return label;
+                                }
+                            },
+                            backgroundColor: isDarkMode ? '#2c2c2e' : '#fff', titleColor: isDarkMode ? '#fff' : '#333',
+                            bodyColor: isDarkMode ? '#fff' : '#333', borderColor: isDarkMode ? '#3a3a3c' : '#e5e7eb', borderWidth: 1
+                        }
+                    }
+                }
+            });
+        };
+
+        const handleGenerateReport = () => {
+            const income = parseFloat(monthlyIncomeInput.value); const lang = userSettings.language;
+            const currencyInfo = currencies[userSettings.currency] || currencies.PKR; reportOutput.innerHTML = '';
+            currentReportDataForDownload = null; downloadReportButton.disabled = true; 
+            const currentCategories = expenseCategories; 
+
+            if (isNaN(income) || income < 0) { reportOutput.innerHTML = `<p class="text-error">${uiStrings[lang].reportNoIncome}</p>`; return; }
+            const currentDate = new Date(); const currentMonth = currentDate.getMonth(); const currentYear = currentDate.getFullYear();
+            const expensesThisMonth = userExpenses.filter(exp => { const d = new Date(exp.date); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
+            const totalExpensesThisMonth = expensesThisMonth.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            const savingsOrOverspent = income - totalExpensesThisMonth;
+            let reportHTML = `<p><strong>${uiStrings[lang].reportIncomeLabel}</strong> ${currencyInfo.symbol} ${income.toFixed(2)}</p>`;
+            reportHTML += `<p><strong>${uiStrings[lang].reportExpensesLabel}</strong> ${currencyInfo.symbol} ${totalExpensesThisMonth.toFixed(2)}</p>`;
+            const resultLabel = savingsOrOverspent >= 0 ? uiStrings[lang].reportSavingsLabel : uiStrings[lang].reportOverspentLabel;
+            const resultClass = savingsOrOverspent >= 0 ? 'text-success' : 'text-error';
+            reportHTML += `<p><strong class="${resultClass}">${resultLabel}</strong> <span class="${resultClass}">${currencyInfo.symbol} ${Math.abs(savingsOrOverspent).toFixed(2)}</span></p>`;
+            
+            const expensesByCategory = expensesThisMonth.reduce((acc, exp) => { acc[exp.category] = (acc[exp.category] || 0) + parseFloat(exp.amount); return acc; }, {});
+            
+            if (expensesThisMonth.length > 0) {
+                reportHTML += `<h4 class="text-md font-medium text-primary mt-3 mb-1">${uiStrings[lang].reportCatSummaryTitle}</h4><ul class="list-disc list-inside text-sm">`;
+                for (const categoryKey in expensesByCategory) {
+                    const categoryName = currentCategories[categoryKey] ? (currentCategories[categoryKey][lang] || currentCategories[categoryKey]['en']) : categoryKey;
+                    reportHTML += `<li>${categoryName}: ${currencyInfo.symbol} ${expensesByCategory[categoryKey].toFixed(2)}</li>`;
+                }
+                reportHTML += `</ul>`;
+            } else { reportHTML += `<p class="mt-2">${uiStrings[lang].reportNoExpensesThisMonth}</p>`; }
+            reportOutput.innerHTML = reportHTML;
+            currentReportDataForDownload = { income, totalExpensesThisMonth, savingsOrOverspent, expensesByCategory, lang, currencyInfo, currentYear, currentMonth, currentCategories };
+            downloadReportButton.disabled = false;
+        };
+
+        const handleDownloadReport = () => {
+            if (!currentReportDataForDownload) { showMessageModal(uiStrings[userSettings.language].fillAllFieldsTitle, "Pehle report generate karein."); return; }
+            const { income, totalExpensesThisMonth, savingsOrOverspent, expensesByCategory, lang, currencyInfo, currentYear, currentMonth, currentCategories } = currentReportDataForDownload;
+            const monthName = new Date(currentYear, currentMonth).toLocaleString(lang === 'ur' ? 'ur-PK' : 'en-US', { month: 'long' });
+            let csvContent = `"${uiStrings[lang].monthlyReportTitle} - ${monthName} ${currentYear}"\n\n`;
+            csvContent += `"${uiStrings[lang].reportIncomeLabel}","${currencyInfo.symbol}${income.toFixed(2)}"\n`;
+            csvContent += `"${uiStrings[lang].reportExpensesLabel}","${currencyInfo.symbol}${totalExpensesThisMonth.toFixed(2)}"\n`;
+            const resultLabel = savingsOrOverspent >= 0 ? uiStrings[lang].reportSavingsLabel : uiStrings[lang].reportOverspentLabel;
+            csvContent += `"${resultLabel}","${currencyInfo.symbol}${Math.abs(savingsOrOverspent).toFixed(2)}"\n\n`;
+            if (Object.keys(expensesByCategory).length > 0) {
+                csvContent += `"${uiStrings[lang].reportCatSummaryTitle}"\n`;
+                csvContent += `"${uiStrings[lang].expenseCategoryLabel}","${uiStrings[lang].expenseAmountLabel}"\n`;
+                for (const categoryKey in expensesByCategory) {
+                    const categoryName = currentCategories[categoryKey] ? (currentCategories[categoryKey][lang] || currentCategories[categoryKey]['en']) : categoryKey;
+                    csvContent += `"${categoryName.replace(/"/g, '""')}","${currencyInfo.symbol}${expensesByCategory[categoryKey].toFixed(2)}"\n`;
+                }
+            } else { csvContent += `"${uiStrings[lang].reportNoExpensesThisMonth}"\n`; }
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); 
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob); link.setAttribute("href", url);
+                link.setAttribute("download", `PennyWise_Report_${currentYear}-${String(currentMonth + 1).padStart(2, '0')}.csv`);
+                link.style.visibility = 'hidden'; document.body.appendChild(link); link.click();
+                document.body.removeChild(link); URL.revokeObjectURL(url);
+            } else { showMessageModal("Download Error", "CSV download is not supported by your browser."); }
+        };
+
+        const fetchAISuggestion = async () => {
+            aiSuggestionOutput.textContent = ''; aiSuggestionLoading.classList.remove('hidden-initially');
+            aiSuggestionLoading.style.display = 'inline-block'; getAISuggestionButton.disabled = true;
+            const lang = userSettings.language;
+            const prompt = lang === 'ur' ? "مجھے ذاتی مالیات اور پیسے بچانے کے لیے ایک مفید مشورہ دیں۔ مختصر اور سمجھنے میں آسان ہو۔" : "Give me a concise and easy-to-understand personal finance saving tip.";
+            const apiKey = ""; // API Key should be handled securely, not hardcoded for production
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            try {
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) { throw new Error(`API request failed: ${response.status}`); }
+                const result = await response.json();
+                if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+                    aiSuggestionOutput.textContent = result.candidates[0].content.parts[0].text;
+                } else { aiSuggestionOutput.textContent = uiStrings[lang].aiSuggestionError; }
+            } catch (error) { console.error("AI Suggestion Error:", error); aiSuggestionOutput.textContent = uiStrings[lang].aiSuggestionError; }
+            finally { aiSuggestionLoading.classList.add('hidden-initially'); aiSuggestionLoading.style.display = 'none'; getAISuggestionButton.disabled = false; }
+        };
+
+        // Event Listeners
+        showSignupButton.addEventListener('click', () => { loginForm.classList.add('hidden-initially'); signupForm.classList.remove('hidden-initially'); loginError.textContent = ''; signupError.textContent = ''; });
+        showLoginButton.addEventListener('click', () => { signupForm.classList.add('hidden-initially'); loginForm.classList.remove('hidden-initially'); loginError.textContent = ''; signupError.textContent = ''; });
+        loginForm.addEventListener('submit', handleLogin); signupForm.addEventListener('submit', handleSignup);
+        logoutButton.addEventListener('click', handleLogout);
+        if(authThemeToggle) authThemeToggle.addEventListener('click', toggleTheme);
+        if(authLanguageToggle) authLanguageToggle.addEventListener('click', handleAuthLanguageToggle);
+        languageSelect.addEventListener('change', handleLanguageChange); currencySelect.addEventListener('change', handleCurrencyChange);
+        addExpenseForm.addEventListener('submit', handleAddExpense);
+        document.querySelectorAll('.password-toggle').forEach(toggle => { toggle.addEventListener('click', togglePasswordVisibility); });
+        if(generateReportButton) generateReportButton.addEventListener('click', handleGenerateReport);
+        if(downloadReportButton) downloadReportButton.addEventListener('click', handleDownloadReport);
+        if(getAISuggestionButton) getAISuggestionButton.addEventListener('click', fetchAISuggestion);
+        if(setBudgetForm) setBudgetForm.addEventListener('submit', handleSetBudget);
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'pennyWiseAdminCategories' || event.key === 'pennyWiseAdminDisclaimers') {
+                console.log('Admin settings changed in another tab. Reloading page to reflect changes.');
+                // Simple reload, could be more sophisticated (e.g., only update relevant parts)
+                location.reload(); 
+            }
+        });
+
+
+        const initializeApp = () => {
+            showLoading(true); 
+            expenseCategories = JSON.parse(localStorage.getItem('pennyWiseAdminCategories')) || defaultExpenseCategories;
+            adminDisclaimerTexts = JSON.parse(localStorage.getItem('pennyWiseAdminDisclaimers')) || defaultDisclaimerContent;
+            
+            applyTheme(currentTheme); 
+            if(copyrightYearSpan) copyrightYearSpan.textContent = new Date().getFullYear();
+            
+            const savedUser = localStorage.getItem('pennyWiseCurrentUser');
+            if (savedUser) {
+                currentUser = savedUser; 
+            }
+            loadUserSettings(); 
+
+            if (currentUser) { 
+                loadUserExpenses(); 
+                loadUserBudgetsState();
+                loggedInUsernameDisplay.textContent = userSettings.fullName || currentUser; 
+                switchPage('app');
+            } else { 
+                switchPage('auth'); 
+            }
+            updateUIWithLanguage(); 
+            expenseDateInput.valueAsDate = new Date(); 
+            showLoading(false);
+        };
+        initializeApp();
+    </script>
+</body>
+</html>
