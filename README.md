@@ -20,6 +20,16 @@ The project is designed with a clean responsive interface, dark mode support, mu
 - Responsive UI for desktop and mobile
 - Simple HTML, CSS, and JavaScript structure
 
+## Pages
+
+Main App:
+
+https://ikramkofficial.github.io/PennyWise/
+
+Admin Page:
+
+https://ikramkofficial.github.io/PennyWise/admin.html
+
 ## Tech Stack
 
 - HTML5
